@@ -1,0 +1,75 @@
+{% import "_includes/forms" as forms %}
+
+
+<h2>Credits remaining</h2>
+
+<p>
+{{ apiCreditsCount }} credits
+</p>
+
+<form id="alt-text-generator-queue" class="utility" method="post" accept-charset="UTF-8">
+	{{ actionInput('alt-text-generator/cp/refresh-api-token-count') }}
+	{{ csrfInput() }}
+
+	<div class="buttons">
+		<button type="submit" class="btn submit">{{ 'Refresh token count' }}</button>
+
+	</div>
+</form>
+
+<hr>
+
+<h2>Queue images for alt text generation</h2>
+<p>(which haven't already been queued and are waiting for review)</p>
+
+
+<form id="alt-text-generator-queue" class="utility" method="post" accept-charset="UTF-8">
+	{{ actionInput('alt-text-generator/cp/queue-images') }}
+	{{ csrfInput() }}
+
+	{{ forms.checkbox({
+		name: 'generateForNoAltText',
+		id: 'generateForNoAltText',
+		label: 'Queue all images with no alt text ',
+		checked: true,
+	}) }}
+	<br />
+	{{ forms.checkbox({
+		name: 'generateForAltText',
+		id: 'generateForAltText',
+		label: 'Queue all images with alt text',
+		checked: false,
+	}) }}
+
+	<div class="buttons">
+		<button type="submit" class="btn submit">{{ 'Queue Images' }}</button>
+	</div>
+</form>
+
+
+
+<hr>
+
+
+
+<h2>AltText.ai hook url</h2>
+
+
+<p>Each api request is sent with it's own web hook url so the same account can be used on multiple sites. but if you would like to add the web hook to your alttext.ai account use this url. (If you are planning to use the human review function then you must use this url in your alttext.ai account)
+</p>
+
+
+{{ forms.text({
+	name: 'webhookUrl',
+	id: 'webhookUrl',
+	label: 'Alttext.ai hook url',
+	value: webhookUrl,
+}) }}
+
+
+
+
+
+
+
+

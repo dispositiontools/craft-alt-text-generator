@@ -1,0 +1,84 @@
+{% set selectedSubnavItem = 'review' %}
+{% extends "_layouts/cp" %}
+
+{% set fullPageForm = true %}
+
+
+
+
+{% block content %}
+
+
+<style>
+	.pill{
+		border-radius:8px;
+		padding: 3px 10px;
+		text-align:center;
+		text-transform: uppercase;
+		display:inline-text;
+		background-color:#eee;
+	}
+	
+	.alt-text-block{
+		margin-bottom:5px;
+		background-color:#f5f5f5;
+		border-radius:10px;
+		padding:5px 10px;
+	}
+	
+	.alt-text-block label{
+
+		
+	}
+	
+	.alt-text-block-header{
+		display:flex;
+		justify-content:space-between;
+	}
+</style>
+
+{{ csrfInput() }}
+{{ actionInput('alt-text-generator/cp/update-api-calls') }}
+
+<h2>Dashboard</h2>
+
+<p>
+Credits: <strong>{{ credits }}</strong>
+</p>
+
+<p>
+<a href="{{ url("alt-text-generator/history") }}">
+View history
+</a>
+</p>
+
+{% set thumb = {
+  mode: 'crop',
+  width: 75,
+  height: 75,
+  quality: 75,
+  position: 'top-center'
+} %}
+
+
+<table>
+<thead>
+<tr>
+	<th>Id</th>
+	<th>Status</th>
+	<th>Asset</th>
+	<th>Alt text</th>
+	<th></th>
+	<th></th>
+	<th></th>
+</tr>
+
+</thead>
+<tbody>
+
+{% for apiCall in apiCalls %}
+ 	{% include "alt-text-generator/_cp/_includes/apicall_table_row" %}
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}

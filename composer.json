@@ -1,0 +1,48 @@
+{
+    "name": "dispositiontools/craft-alt-text-generator",
+    "description": "Creates alt text",
+    "type": "craft-plugin",
+    "license": "proprietary",
+    "support": {
+        "email": "support@disposition.tools",
+        "issues": "https://github.com/dispositiontools/craft-alt-text-generator/issues?state=open",
+        "source": "https://github.com/dispositiontools/craft-alt-text-generator",
+        "docs": "https://github.com/dispositiontools/craft-alt-text-generator",
+        "rss": "https://github.com/dispositiontools/craft-alt-text-generator/releases.atom"
+    },
+    "require": {
+        "php": ">=8.0.2",
+        "craftcms/cms": "^4.5.0"
+    },
+    "require-dev": {
+        "craftcms/ecs": "dev-main"
+    },
+    "autoload": {
+        "psr-4": {
+            "dispositiontools\\craftalttextgenerator\\": "src/"
+        }
+    },
+    "extra": {
+        "handle": "alt-text-generator",
+        "name": "Alt text Generator",
+        "developer": "Disposition Tools",
+        "documentationUrl": "https://github.com/dispositiontools/craft-alt-text-generator",
+        "class": "dispositiontools\\craftalttextgenerator\\AltTextGenerator"
+    },
+    "scripts": {
+        "check-cs": "ecs check --ansi",
+        "fix-cs": "ecs check --ansi --fix",
+        "phpstan": "phpstan --memory-limit=1G"
+    },
+    "config": {
+        "sort-packages": true,
+        "platform": {
+            "php": "8.0.2"
+        },
+        "allow-plugins": {
+            "yiisoft/yii2-composer": true,
+            "craftcms/plugin-installer": true
+        }
+    }
+}
+

@@ -1,0 +1,122 @@
+	<tr>
+	 <td>{{ apiCall.id }}</td>
+	 <td> <span class="pill ">{{ apiCall.altTextSyncStatus }}</span></td>
+	 <td>
+		 {% if apiCall.assetId %}
+			 {% set asset = craft.assets.id(apiCall.assetId).one() %}
+			  {% if asset %}
+			  {% if asset.canView(currentUser) %}<a href="{{ asset.cpEditUrl }}">{% endif %}
+			  <img src="{{ asset.getUrl(thumb) }}" style="width:75px;height:75px; margin-bottom:10px;" alt="{{ asset.alt }}" />
+			  {% if asset.canView(currentUser) %}</a>{% endif %}
+			{% endif %}
+		  {% endif %}
+		 
+	 </td>
+	 <td>
+		 {% if asset %}
+		 <div class="alt-text-block">
+			  <div class="alt-text-block-header">
+				  <label><strong>Current:</strong></label>
+			 </div>
+			  <div>
+				  {% if  asset.alt %}
+					  {{ asset.alt }}
+				 {% else %}
+					 No alt text
+				 {% endif %}
+			  </div>
+		 </div>
+		 {% endif %}
+		 {% if apiCall.originalAltText %}
+		 <div class="alt-text-block">
+			 <div class="alt-text-block-header">
+				 <label><strong>Original:</strong></label>
+				 
+				 {% if currentUser.can('altTextGeneratorSyncAltText') %}
+				<label>
+				  <input type="radio"  name="assets[{{ apiCall.id }}]" value="originalSync"> Sync
+				</label>
+				{% endif %}
+			</div>
+			 <div>
+			 {{ apiCall.originalAltText }}
+			 
+			 </div>
+		</div>
+		{% endif %}
+		<div class="alt-text-block">
+			<div class="alt-text-block-header">
+				 <label><strong>Generated:</strong></label>
+				 {% if currentUser.can('altTextGeneratorSyncAltText') %}
+				<label>
+				  <input type="radio"  name="assets[{{ apiCall.id }}]" value="generatedSync"> Sync
+				</label>
+				{% endif %}
+			</div>
+			<div>
+			 {{ apiCall.generatedAltText }}
+			 </div>
+		</div>
+		
+		
+		{% if apiCall.humanGeneratedAltText  %}
+		<div class="alt-text-block">
+			<div class="alt-text-block-header">
+				 <label><strong>Human Generated:</strong></label>
+				 {% if currentUser.can('altTextGeneratorSyncAltText') %}
+				<label>
+				  <input type="radio"  name="assets[{{ apiCall.id }}]" value="humanGeneratedSync"> Sync
+				</label>
+				{% endif %}
+			</div>
+			<div>
+			 {{ apiCall.humanGeneratedAltText }}
+			 </div>
+		</div>
+		{% elseif apiCall.humanAltTextSyncStatus == "requested" %}
+			<div class="alt-text-block">
+				<div class="alt-text-block-header">
+					 <label><strong>Human review requested</strong>{% if not settings.webhookSetInAccount  and currentUser.can('altTextGeneratorRequestRefresh') %}
+						<br /> -  You'll need to manually request details to get the human reviews alt text
+					  {% endif %}</label>
+				</div>
+			</div>
+		{% endif %}
+	</td>
+
+	<td>	
+	{% if apiCall.humanAltTextSyncStatus %}
+		{% if apiCall.humanAltTextSyncStatus == "requested" %}
+			<span class="pill">Human review requested</span><br />
+			
+		{% endif %}
+	{% else %}
+		{% if settings.showHumanReview and currentUser.can('altTextGeneratorHumanReview') %}
+		<label>
+		<input type="radio"  name="assets[{{ apiCall.id }}]" value="requestHuman">  Request human review
+		</label>
+		{% endif %}
+	{% endif %}
+		{% if settings.showHumanReview and currentUser.can('altTextGeneratorHumanReview') and currentUser.can('altTextGeneratorRequestRefresh') %}
+		<br />
+		{% endif %}
+		{% if currentUser.can('altTextGeneratorRequestRefresh') %}
+		<label>
+		<input type="radio"  name="assets[{{ apiCall.id }}]" value="requestRefresh">  Refresh details
+		</label>
+		{% endif %}
+	</td>
+	<td>
+		{% if currentUser.can('altTextGeneratorDelete') %}
+		<label>
+		<input type="radio"  name="assets[{{ apiCall.id }}]" value="delete"> Delete record
+		</label>
+		{% endif %}
+		
+	</td>
+	<td>
+		<label>
+			<input type="radio"  name="assets[{{ apiCall.id }}]" value="cancel"> Cancel
+		</label>
+	</td>
+</tr>

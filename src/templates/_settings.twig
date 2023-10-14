@@ -1,0 +1,107 @@
+{# @var plugin \dispositiontools\craftalttextgenerator\AltTextGenerator #}
+{# @var settings \dispositiontools\craftalttextgenerator\models\Settings #}
+
+{% import '_includes/forms.twig' as forms %}
+
+{# ... #}
+
+
+{{ forms.textField({
+	label:         "AltText.ai API Key"|t,
+	id:            'apiKey',
+	name:          'apiKey',
+	instructions: '',
+	value:         settings.apiKey,
+	errors:        settings.getErrors('apiKey')
+}) }}
+
+
+
+ {{ forms.lightswitchField({
+	label: "Send to AltText.ai for Alt Text Generations when saving with no alt text",
+	instructions: "",
+	id: 'generateOnSave',
+	name: 'generateOnSave',
+	on: settings.generateOnSave
+}) }}
+
+{#
+should we limit this to certain user groups?
+#}
+
+
+ {{ forms.lightswitchField({
+	label: "Automatically use newly generated alt text",
+	instructions: "If set to false you will be able to check the alt text before using",
+	id: 'useAltTextImmediately',
+	name: 'useAltTextImmediately',
+	on: settings.useAltTextImmediately
+}) }}
+
+
+
+{{ forms.textField({
+	label:         "Hook security code"|t,
+	id:            'securityCode',
+	name:          'securityCode',
+	instructions: '',
+	value:         settings.securityCode,
+	errors:        settings.getErrors('securityCode')
+}) }}
+
+
+
+ {{ forms.lightswitchField({
+	label: "Do API calls async",
+	instructions: "",
+	id: 'asyncApi',
+	name: 'asyncApi',
+	on: settings.asyncApi
+}) }}
+
+
+<h2>Human review</h2>
+
+<p>At the moment alttext.io's API will only send Human review hooks to the web hook url saved in your alttext.ai's account</p>
+ {{ forms.lightswitchField({
+	label: "Show options to request a human review of the alt text.",
+	instructions: "",
+	id: 'showHumanReview',
+	name: 'showHumanReview',
+	on: settings.showHumanReview
+}) }}
+
+
+<p>If this site's web hook is not set in your alttext.ai account then you'll need to manually request the update alt text.</p>
+ {{ forms.lightswitchField({
+	label: "This site's web hook is set in your alttext.ai account",
+	instructions: "",
+	id: 'webhookSetInAccount',
+	name: 'webhookSetInAccount',
+	on: settings.webhookSetInAccount
+}) }}
+
+
+{#
+
+update alt if emplty
+update alt even if not empty
+save to other field
+
+
+automatically use generated alt text? 
+or wait for confirmation?
+
+
+create widget to show alt text stats
+
+
+setting for field that has context?
+
+
+
+the field can show progress?
+
+keywords to use in the image
+
+#}
