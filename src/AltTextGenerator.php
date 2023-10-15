@@ -187,7 +187,7 @@ class AltTextGenerator extends Plugin
         // Generate the encryption key that is unique to this installation.
         Event::on(Plugins::class, Plugins::EVENT_AFTER_INSTALL_PLUGIN, function(PluginEvent $event) {
             if ($event->plugin === $this) {
-                $initialSettings = ['securityKey' => Craft::$app->getSecurity()->generateRandomString(16)];
+                $initialSettings = ['securityCode' => Craft::$app->getSecurity()->generateRandomString(16)];
                 Craft::$app->getPlugins()->savePluginSettings($this, $initialSettings);
             }
         });

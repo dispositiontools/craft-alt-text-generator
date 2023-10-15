@@ -27,9 +27,15 @@ class CpController extends Controller
         
         $request = Craft::$app->getRequest();
             
-        $apiCreditsCount = AltTextGenerator::getInstance()->altTextAiApi->getNumberOfAltTextApiCredits();
+       
             
         $settings = AltTextGenerator::getInstance()->getSettings();
+        if(! $settings->apiKey)
+        {
+            return $this->renderTemplate('alt-text-generator/_cp/setup', ['title' => 'Alt Text Generator']);
+        }
+
+        $apiCreditsCount = AltTextGenerator::getInstance()->altTextAiApi->getNumberOfAltTextApiCredits();
     
         // We need these three request parameters for the view. ("value" optional)
         $templateParams = [

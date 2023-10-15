@@ -978,6 +978,11 @@ class AltTextAiApi extends Component
        
         $settings = AltTextGenerator::getInstance()->getSettings();
         $apiKey = $settings->apiKey;
+
+        if(! $apiKey)
+        {
+            return false;
+        }
        
         $options = array(
          'http' => array(

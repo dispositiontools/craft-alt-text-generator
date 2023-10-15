@@ -16,4 +16,5 @@ class Settings extends Model
     public ?bool $asyncApi = true;
     public ?bool $showHumanReview = true;
     public ?bool $webhookSetInAccount = true;
+    public ?bool $apiKeyActive = false;
 }
