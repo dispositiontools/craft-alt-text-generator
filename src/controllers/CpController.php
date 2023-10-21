@@ -30,8 +30,7 @@ class CpController extends Controller
        
             
         $settings = AltTextGenerator::getInstance()->getSettings();
-        if(! $settings->apiKey)
-        {
+        if (!$settings->apiKey) {
             return $this->renderTemplate('alt-text-generator/_cp/setup', ['title' => 'Alt Text Generator']);
         }
 
@@ -81,8 +80,12 @@ class CpController extends Controller
     */
     public function actionQueueImages(): Response
     {
-        $generateForNoAltText = false;
-        $generateForAltText = false;
+        $this->requirePostRequest();
+        $request = Craft::$app->getRequest();
+        $generateForNoAltText = $request->post('generateForNoAltText');
+        $generateForAltText = $request->post('generateForAltText');
+        
+        
         
         AltTextGenerator::getInstance()->altTextAiApi->queueAllImages($generateForNoAltText,$generateForAltText);
             
@@ -111,17 +114,6 @@ class CpController extends Controller
         
         AltTextGenerator::getInstance()->altTextAiApi->updateApiCalls($assets);
             
-        // Go through each type of edit and get it done.
-        return $this->redirectToPostedUrl();
-    }
-    
-    
-    
-    /**
-     * alt-text-generator/cp/update-api-calls action
-    */
-    public function actionApiCalls(): Response
-    {
         // Go through each type of edit and get it done.
         return $this->redirectToPostedUrl();
     }

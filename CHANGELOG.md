@@ -1,5 +1,10 @@
 # Release Notes for Alt text Generator
 
+## v1.0.2 - 2023-10-18
+
+### Fixed
+- Queuing all images from the utility
+
 ## v1.0.1 - 2023-10-15
 
 ### Added

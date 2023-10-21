@@ -2,7 +2,6 @@
 
 namespace dispositiontools\craftalttextgenerator\jobs;
 
-use Craft;
 use craft\queue\BaseJob;
 use dispositiontools\craftalttextgenerator\AltTextGenerator;
 
@@ -11,12 +10,11 @@ use dispositiontools\craftalttextgenerator\AltTextGenerator;
  */
 class RefreshImageDetails extends BaseJob
 {
-    
     public ?int $apiCallId = null;
     public ?int $humanRequestUserId = null;
     
     
-    function execute($queue): void
+    public function execute($queue): void
     {
         // ...
         AltTextGenerator::getInstance()->altTextAiApi->RefreshImageDetailsFromAltTextAi($this->apiCallId, $this->humanRequestUserId);

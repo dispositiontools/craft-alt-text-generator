@@ -5,8 +5,9 @@ namespace dispositiontools\craftalttextgenerator\elements\actions;
 use Craft;
 use craft\base\ElementAction;
 use craft\helpers\Queue;
-use dispositiontools\craftalttextgenerator\jobs\RequestAltText as RequestAltTextJob;
 use dispositiontools\craftalttextgenerator\AltTextGenerator;
+use dispositiontools\craftalttextgenerator\jobs\RequestAltText as RequestAltTextJob;
+
 /**
  * Generate Alt Text element action
  */
@@ -50,23 +51,20 @@ class GenerateAltText extends ElementAction
     {
         $currentUser = Craft::$app->getUser()->getIdentity();
         $numberOfCredits = AltTextGenerator::getInstance()->altTextAiApi->getNumberOfAltTextApiCredits();
-        $numberOfCredits = $numberOfCredits - 25;   
+        $numberOfCredits = $numberOfCredits - 25;
         $elements = $query->all();
         $numberOfElements = 0;
-        if(is_countable($elements))
-        {
+        if (is_countable($elements)) {
             $numberOfElements = count($elements);
         }
         
-        if( $numberOfElements > $numberOfCredits   ) 
-        {
-            $this->setMessage( 'Your alttext.io account only has about '.$numberOfCredits . " and you have selected ". $numberOfElements . " elements. Please reduce the number of assets selected and try again.");
+        if ($numberOfElements > $numberOfCredits) {
+            $this->setMessage('Your alttext.io account only has about ' . $numberOfCredits . " and you have selected " . $numberOfElements . " elements. Please reduce the number of assets selected and try again.");
             return false;
         }
         
         $returnMessage = "";
         foreach ($elements as $element) {
-            
             Queue::push(new RequestAltTextJob([
                 "assetId" => $element->id,
                 "requestUserId" => $currentUser->id,
@@ -74,7 +72,7 @@ class GenerateAltText extends ElementAction
         }
         /**/
         
-            $this->setMessage( $numberOfElements. " elements have been queued with alttext.ai for alt text generation.");
+        $this->setMessage($numberOfElements . " elements have been queued with alttext.ai for alt text generation.");
         
         return true;
         

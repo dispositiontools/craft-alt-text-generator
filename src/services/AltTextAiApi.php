@@ -9,9 +9,10 @@ use craft\helpers\Queue;
 use craft\helpers\StringHelper;
 use craft\helpers\UrlHelper;
 use dispositiontools\craftalttextgenerator\AltTextGenerator;
+use dispositiontools\craftalttextgenerator\jobs\RefreshImageDetails as RefreshImageDetailsJob;
+use dispositiontools\craftalttextgenerator\jobs\RequestAltText as RequestAltTextJob;
 use dispositiontools\craftalttextgenerator\jobs\RequestHumanAltTextReview as RequestHumanAltTextReviewJob;
 use dispositiontools\craftalttextgenerator\jobs\UpdateAssetWithGeneratedAltText as UpdateAssetWithGeneratedAltTextJob;
-use dispositiontools\craftalttextgenerator\jobs\RefreshImageDetails as RefreshImageDetailsJob;
 
 use dispositiontools\craftalttextgenerator\models\AltTextAiApiCall as AltTextAiApiCallModel;
 use dispositiontools\craftalttextgenerator\records\AltTextAiApiCall as AltTextAiApiCallRecord;
@@ -176,7 +177,7 @@ class AltTextAiApi extends Component
                                      
                                      Queue::push(new RefreshImageDetailsJob([
                                           "apiCallId" => $AltTextAiApiCallModel->id,
-                                          "humanRequestUserId" =>  $currentUserId
+                                          "humanRequestUserId" => $currentUserId,
                                       ]));
                                       
                                      unset($AltTextAiApiCallModel);
@@ -262,14 +263,12 @@ class AltTextAiApi extends Component
         
         $imageDetails = $this->makeGetImageByAssetIdApiCall($requestId);
         
-        if(!$imageDetails )
-        {
+        if (!$imageDetails) {
             return false;
         }
         
         $imageDetailsArray = json_decode($imageDetails, true);
-        if(! $imageDetailsArray  )
-        {
+        if (!$imageDetailsArray) {
             return false;
         }
         
@@ -280,32 +279,25 @@ class AltTextAiApi extends Component
         }
         
         $updateModel = false;
-        if($imageDetailsArray['alt_text'])
-        {
-            if(
-                $AltTextAiApiCallModel->humanDateRequest 
-                && $imageDetailsArray['alt_text'] != $AltTextAiApiCallModel->generatedAltText 
-                && $imageDetailsArray['alt_text'] != $AltTextAiApiCallModel->humanGeneratedAltText 
-            )
-            {
+        if ($imageDetailsArray['alt_text']) {
+            if (
+                $AltTextAiApiCallModel->humanDateRequest
+                && $imageDetailsArray['alt_text'] != $AltTextAiApiCallModel->generatedAltText
+                && $imageDetailsArray['alt_text'] != $AltTextAiApiCallModel->humanGeneratedAltText
+            ) {
                 $AltTextAiApiCallModel->humanGeneratedAltText = $imageDetailsArray['alt_text'];
                 $AltTextAiApiCallModel->humanAltTextSyncStatus = "review";
                 $AltTextAiApiCallModel->altTextSyncStatus = "review";
                 $updateModel = true;
-            }
-            elseif($imageDetailsArray['alt_text'] != $AltTextAiApiCallModel->generatedAltText) 
-            {
+            } elseif ($imageDetailsArray['alt_text'] != $AltTextAiApiCallModel->generatedAltText) {
                 $AltTextAiApiCallModel->generatedAltText = $imageDetailsArray['alt_text'];
                 $AltTextAiApiCallModel->altTextSyncStatus = "review";
                 $updateModel = true;
             }
             
-            if($updateModel)
-            {
+            if ($updateModel) {
                 $this->saveApiCall($AltTextAiApiCallModel);
             }
-            
-            
         }
         
         
@@ -550,21 +542,19 @@ class AltTextAiApi extends Component
         
         $AltTextAiApiCallModel = $this->getApiCallByAssetId($assetId);
         
-        if($AltTextAiApiCallModel)
-        {
-            
+        if ($AltTextAiApiCallModel) {
             $AltTextAiApiCallModel->altTextSyncStatus = "refreshing";
             $AltTextAiApiCallModel = $this->saveApiCall($AltTextAiApiCallModel);
 
             Queue::push(new RefreshImageDetailsJob([
                   "apiCallId" => $AltTextAiApiCallModel->id,
-                  "humanRequestUserId" =>  $requestUserId
+                  "humanRequestUserId" => $requestUserId,
               ]));
             return true;
         }
         
         
-        // get the element       
+        // get the element
         $asset = AssetElement::find()->id($assetId)->one();
             
         if (!$asset) {
@@ -692,15 +682,16 @@ class AltTextAiApi extends Component
                 $this->processAltTextAiWebhookReviewed($hookData);
             }
         }
-        unset( $hookData );
-        unset( $responseArray );
+        unset($hookData);
+        unset($responseArray);
     }
     
     
     public function processAltTextAiWebhookUploaded($hookData)
     {
-        
         $responseArray = json_decode($hookData, true);
+        
+        $settings = AltTextGenerator::getInstance()->getSettings();
         
         if (is_array($responseArray) && array_key_exists("data", $responseArray) && array_key_exists("images", $responseArray['data'])) {
             foreach ($responseArray['data']['images'] as $imageResponse) {
@@ -718,14 +709,14 @@ class AltTextAiApi extends Component
                            
                         $AltTextAiApiCallModel->generatedAltText = $imageResponse['alt_text'];
                            
-                        if ($settings->useAltTextImmediately) {
+                        if ($settings->useAltTextImmediately === true) {
                             $asset = AssetElement::find()->id($AltTextAiApiCallModel->assetId)->one();
                             if ($asset) {
                                 $asset->alt = $imageResponse['alt_text'];
                                 $success = Craft::$app->elements->saveElement($asset);
                                 $AltTextAiApiCallModel->altTextSyncStatus = "synced";
                                 
-                                unset( $asset );
+                                unset($asset);
                             } else {
                                 $AltTextAiApiCallModel->altTextSyncStatus = "review";
                             }
@@ -735,20 +726,21 @@ class AltTextAiApi extends Component
                            
                            
                         $this->saveApiCall($AltTextAiApiCallModel);
-                        unset( $AltTextAiApiCallModel );
+                        unset($AltTextAiApiCallModel);
                     }
                 }
             }
         }
         
        
-        unset( $responseArray );
+        unset($responseArray);
     }
     
     
     public function processAltTextAiWebhookReviewed($hookData)
     {
         $responseArray = json_decode($hookData, true);
+        $settings = AltTextGenerator::getInstance()->getSettings();
         
         if (is_array($responseArray) && array_key_exists("data", $responseArray) && array_key_exists("images", $responseArray['data'])) {
             foreach ($responseArray['data']['images'] as $imageResponse) {
@@ -773,7 +765,7 @@ class AltTextAiApi extends Component
                                 $success = Craft::$app->elements->saveElement($asset);
                                 $AltTextAiApiCallModel->altTextSyncStatus = "synced";
                                 $AltTextAiApiCallModel->humanAltTextSyncStatus = "synced";
-                                unset( $asset );
+                                unset($asset);
                             } else {
                                 $AltTextAiApiCallModel->altTextSyncStatus = "review";
                                 $AltTextAiApiCallModel->humanAltTextSyncStatus = "review";
@@ -785,13 +777,13 @@ class AltTextAiApi extends Component
                            
                            
                         $this->saveApiCall($AltTextAiApiCallModel);
-                        unset( $AltTextAiApiCallModel );
+                        unset($AltTextAiApiCallModel);
                     }
                 }
             }
         }
         
-        unset( $responseArray );
+        unset($responseArray);
     }
     
     
@@ -830,18 +822,16 @@ class AltTextAiApi extends Component
         }
         
         $numberOfCredits = AltTextGenerator::getInstance()->altTextAiApi->getNumberOfAltTextApiCredits();
-        $numberOfCredits = $numberOfCredits - 25;   
+        $numberOfCredits = $numberOfCredits - 25;
     
         $requestCount = 0;
         if ($generateForNoAltText) {
             $assetsQuery = AssetElement::find()->kind('image')->hasAlt(false);
             $assets = $assetsQuery->all();
             foreach ($assets as $asset) {
-                
                 $requestCount++;
                 
-                if($requestCount >= $numberOfCredits)
-                {
+                if ($requestCount >= $numberOfCredits) {
                     continue;
                 }
                 
@@ -867,11 +857,9 @@ class AltTextAiApi extends Component
             $assetsQuery = AssetElement::find()->kind('image')->hasAlt(true);
             $assets = $assetsQuery->all();
             foreach ($assets as $asset) {
-                
                 $requestCount++;
                 
-                if($requestCount >= $numberOfCredits)
-                {
+                if ($requestCount >= $numberOfCredits) {
                     continue;
                 }
                 
@@ -906,8 +894,7 @@ class AltTextAiApi extends Component
     
     public function makeGetImageByAssetIdApiCall($asset_id)
     {
-
-        $url = "https://alttext.ai/api/v1/images/".$asset_id;
+        $url = "https://alttext.ai/api/v1/images/" . $asset_id;
     
         $settings = AltTextGenerator::getInstance()->getSettings();
         $apiKey = $settings->apiKey;
@@ -979,8 +966,7 @@ class AltTextAiApi extends Component
         $settings = AltTextGenerator::getInstance()->getSettings();
         $apiKey = $settings->apiKey;
 
-        if(! $apiKey)
-        {
+        if (!$apiKey) {
             return false;
         }
        

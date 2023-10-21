@@ -128,10 +128,9 @@ class ToolsController extends Controller
      */
     public function actionRefreshImageDetails($apiCallId)
     {
-        
-        echo "Getting image details for ".$apiCallId;
+        echo "Getting image details for " . $apiCallId;
         echo "\n";
-        AltTextGenerator::getInstance()->altTextAiApi->refreshImageDetailsFromAltTextAi( $apiCallId );            
+        AltTextGenerator::getInstance()->altTextAiApi->refreshImageDetailsFromAltTextAi($apiCallId);
         echo "\n";
         echo "\n";
         return ExitCode::OK;

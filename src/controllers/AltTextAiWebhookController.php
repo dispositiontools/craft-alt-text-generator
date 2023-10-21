@@ -34,7 +34,9 @@ class AltTextAiWebhookController extends Controller
     public function actionIndex(): Response
     {
         // ...
+        return $this->renderTemplate('alt-text-generator/_cp/setup', ['title' => 'Alt Text Generator']);
     }
+    
     
     
     /**
@@ -46,9 +48,9 @@ class AltTextAiWebhookController extends Controller
         $this->requirePostRequest();
         
         $request = Craft::$app->getRequest();
-            $body = $request->getRawBody();
+        $body = $request->getRawBody();
             
-        file_put_contents("raw-body-".date("Ymd_His").".json",  $body);
+        file_put_contents("raw-body-" . date("Ymd_His") . ".json",  $body);
        
         $settings = AltTextGenerator::getInstance()->getSettings();
         

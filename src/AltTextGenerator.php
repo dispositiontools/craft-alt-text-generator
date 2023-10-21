@@ -90,6 +90,7 @@ class AltTextGenerator extends Plugin
         });
         */
         
+        $settings = $this->getSettings();
 
 
         Event::on(Utilities::class, Utilities::EVENT_REGISTER_UTILITY_TYPES, function(RegisterComponentTypesEvent $event) {
@@ -108,48 +109,49 @@ class AltTextGenerator extends Plugin
         
         
         Event::on(
-            UserPermissions::class,
-            UserPermissions::EVENT_REGISTER_PERMISSIONS,
-            function(RegisterUserPermissionsEvent $event) {
-                $event->permissions[] = [
-                    'heading' => 'Alt Text Generator',
-                    'permissions' => [
+                UserPermissions::class,
+                UserPermissions::EVENT_REGISTER_PERMISSIONS,
+                function(RegisterUserPermissionsEvent $event) {
+                    $event->permissions[] = [
+                        'heading' => 'Alt Text Generator',
+                        'permissions' => [
+                            
+                            'altTextGeneratorWidgetStats' => [
+                                'label' => 'Stats widget',
+                            ],
+                            'altTextGeneratorViewDashboard' => [
+                                'label' => 'View dashboard',
+                                'nested' => [
+                                    'altTextGeneratorSyncAltText' => [
+                                        'label' => 'Sync generated alt text with asset',
+                                    ],
+                                    'altTextGeneratorHumanReview' => [
+                                        'label' => 'Request human review of AI generated alt text',
+                                    ],
+                                    'altTextGeneratorDelete' => [
+                                        'label' => 'Delete record',
+                                    ],
+                                    'altTextGeneratorRequestRefresh' => [
+                                        'label' => 'Refresh image data from altText.ai',
+                                    ],
+                                ],
+                            ],
+                            'altTextGeneratorViewHistory' => [
+                                    'label' => 'View history',
+                                ],
                         
-                        'altTextGeneratorWidgetStats' => [
-                            'label' => 'Stats widget',
-                        ],
-                        'altTextGeneratorViewDashboard' => [
-                            'label' => 'View dashboard',
-                            'nested' => [
-                                'altTextGeneratorSyncAltText' => [
-                                    'label' => 'Sync generated alt text with asset',
-                                ],
-                                'altTextGeneratorHumanReview' => [
-                                    'label' => 'Request human review of AI generated alt text',
-                                ],
-                                'altTextGeneratorDelete' => [
-                                    'label' => 'Delete record',
-                                ],
-                                'altTextGeneratorRequestRefresh' => [
-                                    'label' => 'Refresh image data from altText.ai',
-                                ]
+                            'altTextGeneratorAssetAction' => [
+                                'label' => 'Queue alt text generation with asset actions',
                             ],
-                        ],
-                        'altTextGeneratorViewHistory' => [
-                                'label' => 'View history',
-                            ],
-                    
-                        'altTextGeneratorAssetAction' => [
-                            'label' => 'Queue alt text generation with asset actions',
-                        ],
-                   ],
-                ];
-            }
-        );
+                       ],
+                    ];
+                }
+            );
+        
        
-       
-      
-        Event::on(
+        // Create event to send asset to have alt text generated if that setting is set to true
+        if ($settings->generateOnSave === true) {
+            Event::on(
             Asset::class,
             Asset::EVENT_AFTER_PROPAGATE,
             function(ModelEvent $event) {
@@ -170,7 +172,8 @@ class AltTextGenerator extends Plugin
                 }
             }
         );
-        /**/
+        } // if settings generateOnSave is true
+      
         
         
         // Register the control panel routes.
