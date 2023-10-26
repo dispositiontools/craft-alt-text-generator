@@ -1,4 +1,30 @@
 {% import "_includes/forms" as forms %}
+{% set altTextApiStatus = craft.app.cache.get('altTextApiStatus') %}
+{% set altTextApiError = craft.app.cache.get('altTextApiError') %}
+{% set altTextApiName = craft.app.cache.get('altTextApiName') %}
+
+
+{% if altTextApiStatus %}
+<div class="">
+	<p>
+	<b>Your API account</b>
+	<br />
+	Name: {{ altTextApiName }}<br />
+	Status: {{ altTextApiStatus }}
+</div>
+{% endif %}
+
+
+{% if altTextApiError %}
+<div class="" style="padding:10px; border: 1px solid #f00;">
+	<p>
+	<b>There is a problem with your API connection</b>
+	<br />
+
+	{{ altTextApiError }}
+</div>
+{% endif %}
+
 
 
 <h2>Credits remaining</h2>
@@ -12,7 +38,7 @@
 	{{ csrfInput() }}
 
 	<div class="buttons">
-		<button type="submit" class="btn submit">{{ 'Refresh token count' }}</button>
+		<button type="submit" class="btn submit">{{ 'Refresh credits count' }}</button>
 
 	</div>
 </form>

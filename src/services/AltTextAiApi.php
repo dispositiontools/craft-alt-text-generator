@@ -85,14 +85,26 @@ class AltTextAiApi extends Component
     {
         $assetsQuery = AssetElement::find()->kind('image')->hasAlt(false);
         $assets = $assetsQuery->all();
-       
-        $imagesWithoutAltText = count($assets);
+        $imagesWithoutAltText = 0;
+        if(is_countable($assets ))
+        {
+            $imagesWithoutAltText = count($assets);
+        }
+        unset($assets);
+        unset($assetsQuery);
+        
        
        
         $assetsQuery = AssetElement::find()->kind('image')->hasAlt(true);
         $assets = $assetsQuery->all();
-        
-        $imagesWithAltText = count($assets);
+        $imagesWithAltText = 0;
+        if(is_countable($assets ))
+        {
+            $imagesWithAltText = count($assets);
+        }
+
+        unset($assets);
+        unset($assetsQuery);
         
         return [
            'imagesWithoutAltText' => $imagesWithoutAltText,
@@ -974,6 +986,7 @@ class AltTextAiApi extends Component
          'http' => array(
            'method' => "GET",
            'header' => "X-API-Key:  " . $apiKey . "\n",
+           'ignore_errors' => true
          ),
        );
        
@@ -981,6 +994,35 @@ class AltTextAiApi extends Component
         $jsonResponse = file_get_contents($url, false, $context);
        
         return $jsonResponse;
+    }
+
+
+    public function getApikeyStatus($accountJson)
+    {
+        $accountArray = json_decode($accountJson, true);
+
+
+        if (array_key_exists('name',$accountArray)) {
+            Craft::$app->cache->set('altTextApiName', $accountArray['name'], 60 * 500);
+            if ( array_key_exists('subscription',$accountArray) && array_key_exists('status',$accountArray['subscription']) )
+            {
+                if($accountArray['subscription']['status'] == "active"){
+                    Craft::$app->cache->set('altTextApiError', false, 60 * 500);
+                }
+                else{
+                    Craft::$app->cache->set('altTextApiError', 'API key error', 60 * 500);
+                   
+                }
+                Craft::$app->cache->set('altTextApiStatus', $accountArray['subscription']['status'], 60 * 500);
+            }
+            
+        }
+        else{
+            Craft::$app->cache->set('altTextApiError', 'API key error', 60 * 500);
+            Craft::$app->cache->set('altTextApiName', false, 60 * 500);
+            Craft::$app->cache->set('altTextApiStatus', false, 60 * 500);
+        }
+
     }
     
     // AltTextGenerator::getInstance()->altTextAiApi->getNumberOfAltTextApiCredits();
@@ -994,7 +1036,7 @@ class AltTextAiApi extends Component
             // Some expensive work goes in here
             
             return $this->refreshNumberOfAltTextApiCredits();
-        }, 60 * 60);
+        }, 60 * 10);
         
         return $credits;
     }
@@ -1018,7 +1060,7 @@ class AltTextAiApi extends Component
             }
              
             return $numberOfItemsToReview;
-        }, 60 * 60);
+        }, 60 * 5);
          
         return  $altTextNumberOfItemsToReview;
     }
@@ -1047,10 +1089,13 @@ class AltTextAiApi extends Component
     public function refreshNumberOfAltTextApiCredits()
     {
         $accountJson = $this->makeAccountApiCall();
+
+        $this->getApikeyStatus($accountJson);
         
         $accountArray = json_decode($accountJson, true);
         $usage = 0;
         $usage_limit = 0;
+
         if ($accountArray) {
             if (array_key_exists('usage', $accountArray)) {
                 $usage = $accountArray['usage'];
@@ -1059,13 +1104,16 @@ class AltTextAiApi extends Component
             if (array_key_exists('usage_limit', $accountArray)) {
                 $usage_limit = $accountArray['usage_limit'];
             }
+
         }
+       
+        
         
         $credits = $usage_limit - $usage;
         
         $creditsCacheKey = "altTextApiCreditsCount";
         
-        Craft::$app->cache->set($creditsCacheKey, $credits, 60 * 60);
+        Craft::$app->cache->set($creditsCacheKey, $credits, 60 * 15);
         
         return $credits;
     }
