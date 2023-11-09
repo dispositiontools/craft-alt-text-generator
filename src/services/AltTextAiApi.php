@@ -970,7 +970,8 @@ class AltTextAiApi extends Component
         return $jsonResponse;
     }
     
-    
+    // AltTextGenerator::getInstance()->altTextAiApi->makeAccountApiCall();
+   
     public function makeAccountApiCall()
     {
         $url = "https://alttext.ai/api/v1/account";
@@ -1002,9 +1003,9 @@ class AltTextAiApi extends Component
         $accountArray = json_decode($accountJson, true);
 
 
-        if (array_key_exists('name',$accountArray)) {
+        if ( $accountArray && array_key_exists('name',$accountArray)) {
             Craft::$app->cache->set('altTextApiName', $accountArray['name'], 60 * 500);
-            if ( array_key_exists('subscription',$accountArray) && array_key_exists('status',$accountArray['subscription']) )
+            if ( array_key_exists('subscription',$accountArray) && is_array($accountArray['subscription']) && array_key_exists('status',$accountArray['subscription']) )
             {
                 if($accountArray['subscription']['status'] == "active"){
                     Craft::$app->cache->set('altTextApiError', false, 60 * 500);
@@ -1014,6 +1015,9 @@ class AltTextAiApi extends Component
                    
                 }
                 Craft::$app->cache->set('altTextApiStatus', $accountArray['subscription']['status'], 60 * 500);
+            }
+            else{
+                Craft::$app->cache->set('altTextApiStatus', "No active subscription (Free trial or Pay as you go)", 60 * 500);
             }
             
         }

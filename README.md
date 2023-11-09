@@ -9,7 +9,7 @@ This plugin requires Craft CMS 4.5.0 or later, and PHP 8.0.2 or later.
 
 ## Installation
 
-You will need an account and set up an API key with https://www.alttext.ai in order to use this plugin. 
+You will need an account and set up an API key with (https://www.alttext.ai)[https://alttext.ai/?gr_pk=Zj92&gr_uid=L6Oa] in order to use this plugin. 
 
 You can install this plugin from the Plugin Store or with Composer.
 

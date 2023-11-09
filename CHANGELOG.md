@@ -1,5 +1,17 @@
 # Release Notes for Alt text Generator
 
+
+## v1.0.4 - 2023-11-09
+
+## Fixed
+- Fixed an error that occurred when calling the alttext.ai account details when there wasn't an active subscription (for instance when in a free trial, or using it in Pay as you go mode). Fixing (Issue #2)[https://github.com/dispositiontools/craft-alt-text-generator/issues/2]
+
+## v1.0.3 - 2023-10-26
+
+### Added
+- Added some error checking for when API keys are incorrect or are no longer active
+- Updated some caching of API credits
+
 ## v1.0.2 - 2023-10-18
 
 ### Fixed

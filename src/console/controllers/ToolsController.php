@@ -87,6 +87,23 @@ class ToolsController extends Controller
         echo "\n";
         return ExitCode::OK;
     }
+
+
+    /**
+     * alt-text-generator/tools/get-alttextai-account-details
+     */
+    public function actionGetAlttextaiAccountDetails(): int
+    {
+        echo "Getting alttext.ai account details";
+        echo "\n";
+        $response = AltTextGenerator::getInstance()->altTextAiApi->makeAccountApiCall();
+        echo "\n";
+        echo "API response";
+        echo $response;
+        echo "\n";
+        echo "\n";
+        return ExitCode::OK;
+    }
     
     /**
      * alt-text-generator/tools/get-generated-alt-text-for-asset 12463
