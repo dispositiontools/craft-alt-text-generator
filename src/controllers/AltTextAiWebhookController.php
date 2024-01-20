@@ -16,17 +16,6 @@ class AltTextAiWebhookController extends Controller
     protected array|int|bool $allowAnonymous = ['web-hook'];
     public $enableCsrfValidation = false;
     
-    /*
-    public function beforeAction($actionId): bool
-    {
-        // Don’t require a CSRF token for incoming webhooks:
-        if ($actionId === 'web-hook') {
-            $this->enableCsrfValidation = false;
-        }
-
-        return parent::beforeAction($actionId);
-    }
-    */
 
     /**
      * alt-text-generator/alt-text-ai-webhook action
@@ -49,8 +38,6 @@ class AltTextAiWebhookController extends Controller
         
         $request = Craft::$app->getRequest();
         $body = $request->getRawBody();
-            
-        file_put_contents("raw-body-" . date("Ymd_His") . ".json",  $body);
        
         $settings = AltTextGenerator::getInstance()->getSettings();
         
