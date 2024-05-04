@@ -1,6 +1,21 @@
 # Release Notes for Alt text Generator
 
 
+## v5.0.0 - 2024-05-04
+
+### Fixed
+- An issue that stopped people trying out the API with a trial alttext.ai account
+- Fixed an issue where errors where not being correctly stored and not shown
+- Changed the default setting for using async to false so that most people get the results immediately
+
+### Added
+- Craft CMS 5 compatability
+- The ability to resubmit an image to alttext.ai 
+- A new setting to give the ability to choose from the different (language models)[https://alttext.ai/docs/webui/account/#style-and-level-of-detail]
+- A new setting to allow you to choose the language the alttext.ai returns
+- The ability to edit the alt text before syncing to an asset
+
+
 ## v1.0.5 - 2024-01-20
 
 ### Fixed

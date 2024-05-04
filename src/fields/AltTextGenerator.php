@@ -22,7 +22,7 @@ class AltTextGenerator extends Field implements PreviewableFieldInterface
         return Craft::t('alt-text-generator', 'Alt Text Generator');
     }
 
-    public static function valueType(): string
+    public static function phpType(): string
     {
         return 'mixed';
     }
@@ -51,14 +51,14 @@ class AltTextGenerator extends Field implements PreviewableFieldInterface
         return Schema::TYPE_STRING;
     }
 
-    public function normalizeValue(mixed $value, ElementInterface $element = null): mixed
+    public function normalizeValue(mixed $value, ?\craft\base\ElementInterface $element = null): mixed
     {
         return $value;
     }
 
-    protected function inputHtml(mixed $value, ElementInterface $element = null): string
+    protected function inputHtml(mixed $value, ElementInterface $element = null, bool $inline = false): string
     {
-        return Html::textinput($this->handle, $value);
+        return Html::textinput($this->handle, $value, false);
     }
 
     public function getElementValidationRules(): array
@@ -76,8 +76,5 @@ class AltTextGenerator extends Field implements PreviewableFieldInterface
         return TextFieldConditionRule::class;
     }
 
-    public function modifyElementsQuery(ElementQueryInterface $query, mixed $value): void
-    {
-        parent::modifyElementsQuery($query, $value);
-    }
+
 }

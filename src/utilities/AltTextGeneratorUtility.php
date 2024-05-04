@@ -22,7 +22,7 @@ class AltTextGeneratorUtility extends Utility
         return 'alt-text-generator-utility';
     }
 
-    public static function iconPath(): ?string
+    public static function icon(): ?string
     {
         
         // Set the icon mask path

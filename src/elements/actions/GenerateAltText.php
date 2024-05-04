@@ -47,22 +47,22 @@ class GenerateAltText extends ElementAction
         return '';
     }
 
-    public function performAction(Craft\elements\db\ElementQueryInterface $query): bool
+    public function performAction(\craft\elements\db\ElementQueryInterface $query): bool
     {
         $currentUser = Craft::$app->getUser()->getIdentity();
         $numberOfCredits = AltTextGenerator::getInstance()->altTextAiApi->getNumberOfAltTextApiCredits();
-        $numberOfCredits = $numberOfCredits - 25;
+  
         $elements = $query->all();
         $numberOfElements = 0;
         if (is_countable($elements)) {
             $numberOfElements = count($elements);
         }
-        
+
         if ($numberOfElements > $numberOfCredits) {
             $this->setMessage('Your alttext.io account only has about ' . $numberOfCredits . " and you have selected " . $numberOfElements . " elements. Please reduce the number of assets selected and try again.");
             return false;
         }
-        
+
         $returnMessage = "";
         foreach ($elements as $element) {
             Queue::push(new RequestAltTextJob([
@@ -71,11 +71,11 @@ class GenerateAltText extends ElementAction
             ]));
         }
         /**/
-        
+
         $this->setMessage($numberOfElements . " elements have been queued with alttext.ai for alt text generation.");
-        
+
         return true;
-        
+
         // ...
     }
 }

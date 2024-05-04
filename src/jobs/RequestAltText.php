@@ -12,11 +12,12 @@ class RequestAltText extends BaseJob
 {
     public ?int $assetId = null;
     public ?int $requestUserId = null;
+    public ?bool $overwrite = false;
     public ?string $actionType = "Action";
     
     public function execute($queue): void
     {
-        AltTextGenerator::getInstance()->altTextAiApi->callAltTextAiAipi($this->assetId,  $this->actionType, false, $this->requestUserId);
+        AltTextGenerator::getInstance()->altTextAiApi->callAltTextAiAipi($this->assetId,  $this->actionType, false, $this->requestUserId, $this->overwrite);
     }
 
     protected function defaultDescription(): ?string

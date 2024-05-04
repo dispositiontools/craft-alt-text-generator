@@ -1,11 +1,11 @@
 ![Alt Text Generator](resources/img/icon-dispositiontools-alt-text-generator@3x.png)
 
 # Alt Text Generator
-Automatically generate image Alt Text descriptions using the alttext.ai API.
+Automatically generate image Alt Text descriptions using the alttext.ai API for Craft CMS 5
 
 ## Requirements
 
-This plugin requires Craft CMS 4.5.0 or later, and PHP 8.0.2 or later.
+This plugin requires Craft CMS 5.0.0 or later, and PHP 8.2 or later.
 
 ## Installation
 
