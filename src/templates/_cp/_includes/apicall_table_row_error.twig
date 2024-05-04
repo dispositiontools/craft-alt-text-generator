@@ -46,17 +46,16 @@
 		{% endif %}
 		<div class="alt-text-block">
 			<div class="alt-text-block-header">
-				<label><strong>Generated:</strong></label> 
-				{% if currentUser.can('altTextGeneratorSyncAltText') %}
-				<div class="">
-				 	<a href="#generatedAltText{{ apiCall.id }}" class="alt-text-edit-button" onclick="var editTextArea = document.getElementById('generatedAltText{{ apiCall.id }}'); editTextArea.disabled=false;">Edit</a>
-					<label>
-				  		<input type="radio"  name="assets[{{ apiCall.id }}]" value="generatedSync"> Sync
-					</label>
-				</div>
+				 <label><strong>Generated:</strong></label> 
+				 {% if currentUser.can('altTextGeneratorSyncAltText') %}
+				<label>
+				  <input type="radio"  name="assets[{{ apiCall.id }}]" value="generatedSync"> Sync
+				</label>
 				{% endif %}
 			</div>
-			<textarea disabled name="altTextUpdates[generatedAltText][{{ apiCall.id }}]" id="generatedAltText{{ apiCall.id }}" class="alt-text-block-textarea">{{ apiCall.generatedAltText }}</textarea>
+			<div>
+			 {{ apiCall.generatedAltText }}
+			 </div>
 		</div>
 		
 		
@@ -65,16 +64,14 @@
 			<div class="alt-text-block-header">
 				 <label><strong>Human Generated:</strong></label>
 				 {% if currentUser.can('altTextGeneratorSyncAltText') %}
-				<div class="">
-				 	<a href="#humanGeneratedAltText{{ apiCall.id }}" class="alt-text-edit-button" onclick="var editTextArea = document.getElementById('humanGeneratedAltText{{ apiCall.id }}'); editTextArea.disabled=false;">Edit</a>
-					<label>
-				  		<input type="radio"  name="assets[{{ apiCall.id }}]" value="humanGeneratedSync"> Sync
-					</label>
-				</div>
+				<label>
+				  <input type="radio"  name="assets[{{ apiCall.id }}]" value="humanGeneratedSync"> Sync
+				</label>
 				{% endif %}
 			</div>
-			 <textarea disabled name="altTextUpdates[humanGeneratedAltText][{{ apiCall.id }}]" id="humanGeneratedAltText{{ apiCall.id }}" class="alt-text-block-textarea">{{ apiCall.humanGeneratedAltText }}</textarea>
-		
+			<div>
+			 {{ apiCall.humanGeneratedAltText }}
+			 </div>
 		</div>
 		{% elseif apiCall.humanAltTextSyncStatus == "requested" %}
 			<div class="alt-text-block">
@@ -122,5 +119,33 @@
 			<input type="radio"  name="assets[{{ apiCall.id }}]" value="cancel">  Cancel
 		</label>
 	</td>
-	
+	<td>
+	{% if apiCall.altTextSyncStatus == "errors" %}
+		{% set response = apiCall.response %}
+		{% set responseObject = response|json_decode %}
+		{% if responseObject and responseObject.errors %}
+		<table>
+			<thead>
+			<tr>
+				<th style="">Error&nbsp;type</th>
+				<th>Error&nbsp;details</th>
+			</tr>
+			</thead>
+			<tbody>
+			{% for errorType, errorDetails in responseObject.errors %}
+			<tr>
+				<td style="vertical-align: top;"><b>{{ errorType }}</b></td>
+				<td style="vertical-align: top;">
+				{% for errorDetail in errorDetails %}
+				{{ errorDetail }}{% if not loop.last %}, {% endif %}
+				{% endfor %}
+				</td>
+			</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+		{% endif %}
+
+	{% endif %}
+	</td>
 </tr>

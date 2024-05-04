@@ -13,8 +13,10 @@ class Settings extends Model
     public ?bool $generateOnSave = false;
     public ?bool $useAltTextImmediately = false;
     public ?string $securityCode = null;
-    public ?bool $asyncApi = true;
+    public ?bool $asyncApi = false;
     public ?bool $showHumanReview = true;
     public ?bool $webhookSetInAccount = true;
     public ?bool $apiKeyActive = false;
+    public ?string $modelName = "describe-regular";
+    public ?string $lang = "en";
 }

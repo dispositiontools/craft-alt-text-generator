@@ -180,6 +180,7 @@ class AltTextGenerator extends Plugin
         Event::on(UrlManager::class, UrlManager::EVENT_REGISTER_CP_URL_RULES, function(RegisterUrlRulesEvent $event) {
             $event->rules['alt-text-generator'] = 'alt-text-generator/cp/dashboard';
             $event->rules['alt-text-generator/history'] = 'alt-text-generator/cp/history';
+            $event->rules['alt-text-generator/errors'] = 'alt-text-generator/cp/errors';
         });
         
         // register event for when saving an asset
@@ -217,6 +218,10 @@ class AltTextGenerator extends Plugin
         }
         if (Craft::$app->user->checkPermission('altTextGeneratorViewHistory')) {
             $item['subnav'][ 'history'] = ['label' => 'History', 'url' => 'alt-text-generator/history'];
+            $showNav = true;
+        }
+        if (Craft::$app->user->checkPermission('altTextGeneratorViewHistory')) {
+            $item['subnav'][ 'errors'] = ['label' => 'Errors', 'url' => 'alt-text-generator/errors'];
             $showNav = true;
         }
         if ($showNav == true) {

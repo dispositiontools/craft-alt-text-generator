@@ -73,6 +73,32 @@ class CpController extends Controller
         ];
         return $this->renderTemplate('alt-text-generator/_cp/history', $templateParams);
     }
+
+
+     /**
+     * alt-text-generator/cp/errors action
+     */
+    public function actionErrors(): Response
+    {
+        // ...
+        $this->requirePermission('altTextGeneratorViewHistory');
+        $request = Craft::$app->getRequest();
+            
+        $settings = AltTextGenerator::getInstance()->getSettings();
+        
+    
+        // We need these three request parameters for the view. ("value" optional)
+        $templateParams = [
+            'title' => 'Alt Text Generator',
+            'settings' => $settings,
+            'apiCalls' => AltTextGenerator::getInstance()->altTextAiApi->getApiCalls(['where' =>
+                [
+                    'altTextSyncStatus' => ['errors'],
+                ],
+            ]),
+        ];
+        return $this->renderTemplate('alt-text-generator/_cp/errors', $templateParams);
+    }
     
     
     /**
@@ -111,8 +137,9 @@ class CpController extends Controller
         $request = Craft::$app->getRequest();
         
         $assets = $request->post('assets');
+        $altTextUpdates = $request->post('altTextUpdates');
         
-        AltTextGenerator::getInstance()->altTextAiApi->updateApiCalls($assets);
+        AltTextGenerator::getInstance()->altTextAiApi->updateApiCalls($assets, $altTextUpdates);
             
         // Go through each type of edit and get it done.
         return $this->redirectToPostedUrl();

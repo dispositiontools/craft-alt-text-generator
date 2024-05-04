@@ -35,6 +35,33 @@
 		display:flex;
 		justify-content:space-between;
 	}
+
+	.alt-text-block-actions label{
+		white-space: nowrap;
+	}
+
+	.alt-text-block-textarea{
+		width:100%;
+	}
+
+	.alt-text-block-actions label{
+		white-space: nowrap;
+	}
+
+	.alt-text-edit-button{
+		border-radius:8px;
+		padding: 3px 10px;
+		text-align:center;
+		display:inline-text;
+		background-color:#ccc;
+		color:#fff;
+		font-size:12px;
+	}
+
+	.alt-text-edit-button:hover{
+		background-color:#aaa;
+		color:#000;
+	}
 </style>
 
 {{ csrfInput() }}
@@ -65,9 +92,8 @@ View current items to review
 	<th>Status</th>
 	<th>Asset</th>
 	<th>Alt text</th>
-	<th></th>
-	<th></th>
-	<th></th>
+	<th>Actions</th>
+
 </tr>
 
 </thead>

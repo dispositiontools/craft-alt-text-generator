@@ -117,8 +117,8 @@ class AltTextAiApi extends Component
          Called from the review page in the CP
     */
     
-    // AltTextGenerator::getInstance()->updateApiCalls( $assets );
-    public function updateApiCalls($assets): ?bool
+    // AltTextGenerator::getInstance()->updateApiCalls( $assets, $altTextUpdates );
+    public function updateApiCalls($assets, $altTextUpdates = null): ?bool
     {
         $currentUser = Craft::$app->getUser()->getIdentity();
         if ($currentUser) {
@@ -136,6 +136,12 @@ class AltTextAiApi extends Component
                               $AltTextAiApiCallModel = $this->getApiCallById($apiCallId);
                                 if ($AltTextAiApiCallModel) {
                                     $AltTextAiApiCallModel->altTextSyncStatus = "syncing";
+
+                                    if($altTextUpdates && isset($altTextUpdates['generatedAltText'][$apiCallId]) )
+                                    {
+                                        $AltTextAiApiCallModel->generatedAltText = $altTextUpdates['generatedAltText'][$apiCallId];
+                                    }
+
                                     $AltTextAiApiCallModel = $this->saveApiCall($AltTextAiApiCallModel);
                                     Queue::push(new UpdateAssetWithGeneratedAltTextJob([
                                          "apiCallId" => $AltTextAiApiCallModel->id,
@@ -166,6 +172,12 @@ class AltTextAiApi extends Component
                            $AltTextAiApiCallModel = $this->getApiCallById($apiCallId);
                              if ($AltTextAiApiCallModel) {
                                  $AltTextAiApiCallModel->altTextSyncStatus = "syncing";
+
+                                 if($altTextUpdates && isset($altTextUpdates['humanGeneratedAltText'][$apiCallId]) )
+                                 {
+                                     $AltTextAiApiCallModel->humanGeneratedAltText = $altTextUpdates['humanGeneratedAltText'][$apiCallId];
+                                 }
+
                                  $AltTextAiApiCallModel = $this->saveApiCall($AltTextAiApiCallModel);
                                  
                                  Queue::push(new UpdateAssetWithGeneratedAltTextJob([
@@ -195,6 +207,27 @@ class AltTextAiApi extends Component
                                      unset($AltTextAiApiCallModel);
                                  }
                         
+                        break;
+
+                    case "requestResubmit":
+
+                        $AltTextAiApiCallModel = $this->getApiCallById($apiCallId);
+                                 if ($AltTextAiApiCallModel) {
+                                     $AltTextAiApiCallModel->altTextSyncStatus = "resubmit";
+                                     $AltTextAiApiCallModel = $this->saveApiCall($AltTextAiApiCallModel);
+                                     
+                                     Queue::push(new RequestAltTextJob([
+                                          "assetId" => $AltTextAiApiCallModel->assetId,
+                                          "overwrite" => true,
+                                          "requestUserId" => $currentUserId,
+                                          "actionType" => "Review"
+                                      ]));
+                                      
+                                     unset($AltTextAiApiCallModel);
+                                 }
+
+
+
                         break;
                         
                      case "requestHuman":
@@ -546,15 +579,15 @@ class AltTextAiApi extends Component
     
     
     // AltTextGenerator::getInstance()->altTextAiApi->callAltTextAiAipi( $assetId );
-    public function callAltTextAiAipi($assetId, $requestType = "No type", $async = false, $requestUserId = false)
+    public function callAltTextAiAipi($assetId, $requestType = "No type", $async = false, $requestUserId = false, $overwrite = false)
     {
-        
+
         // see if the asset has already been called
         // we are not allowed to recall it. so we will set it to review again
-        
+
         $AltTextAiApiCallModel = $this->getApiCallByAssetId($assetId);
-        
-        if ($AltTextAiApiCallModel) {
+
+        if ($AltTextAiApiCallModel && $overwrite == false) {
             $AltTextAiApiCallModel->altTextSyncStatus = "refreshing";
             $AltTextAiApiCallModel = $this->saveApiCall($AltTextAiApiCallModel);
 
@@ -564,61 +597,88 @@ class AltTextAiApi extends Component
               ]));
             return true;
         }
-        
-        
+        elseif($AltTextAiApiCallModel && $overwrite)
+        {
+            //
+        }
+        else {
+            $AltTextAiApiCallModel = new AltTextAiApiCallModel();
+        }
+
+
         // get the element
         $asset = AssetElement::find()->id($assetId)->one();
-            
+
         if (!$asset) {
             return [
                 'error' => true,
                 'errorMessage' => "No asset",
             ];
         }
-        
+
         $suitability = $this->checkAssetSuitability($asset);
-          
+
         if (!$suitability['success']) {
             return $suitability;
         }
-        
+
         // check if we have enough credits
         // if we don't have credits pause this...
-        
-        
+
+
         // create an rquestId
         // Craft::$app->getSystemUid()
-        
+
         $requestId = StringHelper::toKebabCase(Craft::$app->getSystemName()) . "_" . $asset->uid . "_" . $asset->id;
-        
+
         // create a call model
-        
+
         $assetUrl = $asset->url;
+
         
-        $AltTextAiApiCallModel = new AltTextAiApiCallModel();
-        
+
         $AltTextAiApiCallModel->assetId = $asset->id;
         $AltTextAiApiCallModel->requestId = $requestId;
         $AltTextAiApiCallModel->requestType = $requestType;
         $AltTextAiApiCallModel->dateRequest = DateTimeHelper::currentUTCDateTime();
-        $AltTextAiApiCallModel->altTextSyncStatus = "called";
-        $AltTextAiApiCallModel->originalAltText = $asset->alt;
+        if($overwrite)
+        {
+            $AltTextAiApiCallModel->altTextSyncStatus = "recalled";
+        }
+        else{
+            $AltTextAiApiCallModel->altTextSyncStatus = "called";
+        }   
         
+        $AltTextAiApiCallModel->originalAltText = $asset->alt;
+
         if ($requestUserId) {
             $AltTextAiApiCallModel->requestUserId = $requestUserId;
         }
-        
+
         // do the call
-        
+
         $settings = AltTextGenerator::getInstance()->getSettings();
+
+        $modelName = $settings->modelName;
+        if($modelName == "" || $modelName == null)
+        {
+            $modelName = "describe-regular";
+        }
+
+        $lang = $settings->lang;
+        if($lang == "" || $lang == null)
+        {
+            $lang = "en";
+        }
+
         $webHookParams = [
             'securityCode' => $settings->securityCode,
         ];
         $webhookUrl = UrlHelper::actionUrl('alt-text-generator/alt-text-ai-webhook/web-hook', $webHookParams, null, false);
         $AltTextAiApiCallModel = $this->saveApiCall($AltTextAiApiCallModel);
-        
+
         $imageUrl = UrlHelper::siteUrl($assetUrl);
-        
+
         $callDetails = [
             "image" => [
                 "url" => $imageUrl,
@@ -628,30 +688,43 @@ class AltTextAiApi extends Component
                    "apiCallId" => $AltTextAiApiCallModel->id,
                 ],
             ],
+            "model_name" => $modelName,
             "async" => (bool) $settings->asyncApi,
+            "lang" => $lang
         ];
-        
+
         if ($settings->asyncApi) {
             $callDetails['webhook_url'] = $webhookUrl;
         }
-        
+
+        if( $overwrite ){
+            $callDetails['overwrite'] = true;
+        }
+
         $AltTextAiApiCallModel->request = json_encode($callDetails);
         $AltTextAiApiCallModel = $this->saveApiCall($AltTextAiApiCallModel);
-        
+
 
         $resultsJson = $this->makeCreateImageApiCall($callDetails);
 
-        
-        if (!$async) {
-            $AltTextAiApiCallModel->response = $resultsJson;
-            $AltTextAiApiCallModel->dateResponse = DateTimeHelper::currentUTCDateTime();
-            $AltTextAiApiCallModel->altTextSyncStatus = "received";
-            
-            
-            $resultsArray = json_decode($resultsJson, true);
+        $AltTextAiApiCallModel->response = $resultsJson;
+        $AltTextAiApiCallModel->dateResponse = DateTimeHelper::currentUTCDateTime();
+        $AltTextAiApiCallModel->altTextSyncStatus = "received";
+        $AltTextAiApiCallModel = $this->saveApiCall($AltTextAiApiCallModel);
+
+        $resultsArray = json_decode($resultsJson, true);
+
+        if($resultsArray && array_key_exists('errors', $resultsArray ) && count($resultsArray['errors']) > 0)
+        {
+            $AltTextAiApiCallModel->altTextSyncStatus = "errors";
+            $AltTextAiApiCallModel = $this->saveApiCall($AltTextAiApiCallModel);
+        }
+
+        elseif (!$async && $resultsArray && array_key_exists('alt_text', $resultsArray )) {
+
             $newAltText = $resultsArray['alt_text'];
             $AltTextAiApiCallModel->generatedAltText = $newAltText;
-            
+
             if ($settings->useAltTextImmediately) {
                 $asset->alt = $newAltText;
                 $success = Craft::$app->elements->saveElement($asset);
@@ -659,16 +732,16 @@ class AltTextAiApi extends Component
             } else {
                 $AltTextAiApiCallModel->altTextSyncStatus = "review";
             }
-          
+
             $AltTextAiApiCallModel = $this->saveApiCall($AltTextAiApiCallModel);
         }
-        
-        
-        
-        
+
+
+
+
         // what is they get a 429 error
-        
-        
+
+
         // what if it already exists?
         // then we need to update the asset straight away
     }
@@ -834,7 +907,7 @@ class AltTextAiApi extends Component
         }
         
         $numberOfCredits = AltTextGenerator::getInstance()->altTextAiApi->getNumberOfAltTextApiCredits();
-        $numberOfCredits = $numberOfCredits - 25;
+        $numberOfCredits = $numberOfCredits;
     
         $requestCount = 0;
         if ($generateForNoAltText) {
@@ -966,6 +1039,7 @@ class AltTextAiApi extends Component
          
         $context = stream_context_create($options);
         $jsonResponse = file_get_contents($url, false, $context);
+        
          
         return $jsonResponse;
     }
@@ -992,9 +1066,15 @@ class AltTextAiApi extends Component
        );
        
         $context = stream_context_create($options);
-        $jsonResponse = file_get_contents($url, false, $context);
-       
-        return $jsonResponse;
+        $jsonResponse = @file_get_contents($url, false, $context);
+        if($jsonResponse )
+        {
+            return $jsonResponse;
+        }
+        else{
+            return false;
+        }
+        
     }
 
 

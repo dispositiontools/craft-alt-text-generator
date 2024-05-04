@@ -1,4 +1,4 @@
-{% set selectedSubnavItem = 'review' %}
+{% set selectedSubnavItem = 'errors' %}
 {% extends "_layouts/cp" %}
 
 {% set fullPageForm = true %}
@@ -67,17 +67,14 @@
 {{ csrfInput() }}
 {{ actionInput('alt-text-generator/cp/update-api-calls') }}
 
-<h2>Dashboard</h2>
+<h2>Errors</h2>
 
 <p>
-Credits: <strong>{{ credits }}</strong>
-</p>
-
-<p>
-<a href="{{ url("alt-text-generator/history") }}">
-View history
+<a href="{{ url("alt-text-generator") }}">
+View current items to review
 </a>
 </p>
+
 
 {% set thumb = {
   mode: 'crop',
@@ -96,13 +93,15 @@ View history
 	<th>Asset</th>
 	<th>Alt text</th>
 	<th>Actions</th>
+	<th>Errors</th>
 </tr>
 
 </thead>
 <tbody>
 
 {% for apiCall in apiCalls %}
- 	{% include "alt-text-generator/_cp/_includes/apicall_table_row" %}
+
+	{% include "alt-text-generator/_cp/_includes/apicall_table_row_error" %}
 {% endfor %}
 </tbody>
 </table>
