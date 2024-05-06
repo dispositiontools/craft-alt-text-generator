@@ -26,20 +26,7 @@ class GenerateAltText extends ElementAction
                     type: $type,
 
                     // Whether this action should be available when multiple elements are selected
-                    bulk: true,
-
-                    // Return whether the action should be available depending on which elements are selected
-                    validateSelection: (selectedItems) {
-                      return true;
-                    },
-
-                    // Uncomment if the action should be handled by JavaScript:
-                    // activate: () => {
-                    //   Craft.elementIndex.setIndexBusy();
-                    //   const ids = Craft.elementIndex.getSelectedElementIds();
-                    //   // ...
-                    //   Craft.elementIndex.setIndexAvailable();
-                    // },
+                    bulk: true
                 });
             })();
         JS, [static::class]);

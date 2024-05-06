@@ -1,6 +1,11 @@
 # Release Notes for Alt text Generator
 
 
+## v5.0.1 - 2024-05-06
+
+### Fixed
+- Update to the element action javascript that was causing a problem with when selecting elements
+
 ## v5.0.0 - 2024-05-04
 
 ### Fixed
