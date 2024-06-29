@@ -110,13 +110,17 @@ class CpController extends Controller
         $request = Craft::$app->getRequest();
         $generateForNoAltText = $request->post('generateForNoAltText');
         $generateForAltText = $request->post('generateForAltText');
+        $overwrite = $request->post('overwrite', false);
         
         
         
-        AltTextGenerator::getInstance()->altTextAiApi->queueAllImages($generateForNoAltText,$generateForAltText);
+        $queueAllImagesReport = AltTextGenerator::getInstance()->altTextAiApi->queueAllImages($generateForNoAltText,$generateForAltText, $overwrite);
             
-            
-        return $this->redirectToPostedUrl();
+        return $this->renderTemplate('alt-text-generator/_cp/queue_all_report', [
+            "title" => "Queue Assets report",
+            "queueAllImagesReport" => $queueAllImagesReport
+        ]);
+        //return $this->asSuccess(json_encode($queueAllImagesReport));
     }
     
     

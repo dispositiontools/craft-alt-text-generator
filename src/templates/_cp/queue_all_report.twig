@@ -1,0 +1,116 @@
+ 
+{% extends "_layouts/cp" %}
+
+{% set fullPageForm = false %}
+
+
+
+
+
+{% block content %}
+
+
+<style>
+	.pill{
+		border-radius:8px;
+		padding: 3px 10px;
+		text-align:center;
+		text-transform: uppercase;
+		display:inline-text;
+		background-color:#eee;
+	}
+	
+	.alt-text-block{
+		margin-bottom:5px;
+		background-color:#f5f5f5;
+		border-radius:10px;
+		padding:5px 10px;
+	}
+	
+	.alt-text-block label{
+
+		
+	}
+	
+		.alt-text-block-header{
+		display:flex;
+		justify-content:space-between;
+	}
+
+	.alt-text-block-actions label{
+		white-space: nowrap;
+	}
+
+	.alt-text-block-textarea{
+		width:100%;
+	}
+
+	.alt-text-block-actions label{
+		white-space: nowrap;
+	}
+
+	.alt-text-edit-button{
+		border-radius:8px;
+		padding: 3px 10px;
+		text-align:center;
+		display:inline-text;
+		background-color:#ccc;
+		color:#fff;
+		font-size:12px;
+	}
+
+	.alt-text-edit-button:hover{
+		background-color:#aaa;
+		color:#000;
+	}
+</style>
+
+
+<h2>Queue all report</h2>
+
+<p>
+Credits: <strong>{{ queueAllImagesReport.numberOfCredits }}</strong><br />
+ <br />
+Number of assets with no alt text: <strong>{{ queueAllImagesReport.numberOfAssetsWithNoAltText }}</strong><br />
+Number of assets queued with no alt text : <strong>{{ queueAllImagesReport.numberOfAssetsQueuedWithNoAltText }}</strong><br />
+Number of assets rejected with no alt text : <strong>{{ queueAllImagesReport.numberOfAssetsRejectedWithNoAltText }}</strong><br />
+ <br />
+
+Number of assets with alt text: <strong>{{ queueAllImagesReport.numberOfAssetsWithAltText }}</strong><br />
+Number of assets queued with alt text : <strong>{{ queueAllImagesReport.numberOfAssetsQueuedWithAltText }}</strong><br />
+Number of assets rejected with alt text : <strong>{{ queueAllImagesReport.numberOfAssetsRejectedWithAltText }}</strong><br />
+ <br />
+ 
+</p>
+
+ 
+
+{% set thumb = {
+  mode: 'crop',
+  width: 75,
+  height: 75,
+  quality: 75,
+  position: 'top-center'
+} %}
+
+
+<table>
+<thead>
+<tr>
+	<th>Asset Id</th>
+	<th>Title</th>
+	<th>Status</th>
+</tr>
+
+</thead>
+<tbody
+{% for assetDetails  in queueAllImagesReport.assets %}
+<tr>
+	<td>{{ assetDetails.assetId }}</td>
+	<td><a href="{{ assetDetails.assetUrl }}" target="_blank">{{ assetDetails.assetTitle }}</a></td>
+	<td>{{ assetDetails.assetQueueStatus }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}

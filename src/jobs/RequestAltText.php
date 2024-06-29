@@ -17,7 +17,12 @@ class RequestAltText extends BaseJob
     
     public function execute($queue): void
     {
-        AltTextGenerator::getInstance()->altTextAiApi->callAltTextAiAipi($this->assetId,  $this->actionType, false, $this->requestUserId, $this->overwrite);
+        $jobResult =   AltTextGenerator::getInstance()->altTextAiApi->callAltTextAiAipi($this->assetId,  $this->actionType, false, $this->requestUserId, $this->overwrite);
+   
+   
+        if(isset($jobResult['error']) && $jobResult['error']) {
+            Craft::warning("Error with Request Alt Text Job with meaage: ".$jobResult['errorMessage']);
+        } 
     }
 
     protected function defaultDescription(): ?string
