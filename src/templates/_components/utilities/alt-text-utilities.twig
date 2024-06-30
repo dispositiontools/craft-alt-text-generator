@@ -67,6 +67,14 @@
 		checked: false,
 	}) }}
 
+	<br /> <br />
+	{{ forms.checkbox({
+		name: 'overwrite',
+		id: 'overwrite',
+		label: 'Resubmit assets that have already been sent to alttext.ai and overwrite the results',
+		checked: false,
+	}) }}
+
 	<div class="buttons">
 		<button type="submit" class="btn submit">{{ 'Queue Images' }}</button>
 	</div>

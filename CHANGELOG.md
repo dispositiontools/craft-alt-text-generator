@@ -1,6 +1,20 @@
 # Release Notes for Alt text Generator
 
 
+## v5.1.0 - 2024-06-30
+
+> [!NOTE]  
+> Alttext.ai have removed the ability to request a human review. This option has now been removed from the plugin.
+
+### Added 
+- A queue all report which shows which elements were added via the utility.
+- The option to resubmit a image to Alttext.ai through the queue all utility.
+- Queue job logging to see if there are any issues when requesting alt text from alttext.ai.
+
+### Removed
+- Alttext.ai have removed the ability to request a human review. This option has now been removed from the plugin.
+
+
 ## v5.0.1 - 2024-05-06
 
 ### Fixed

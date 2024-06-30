@@ -94,11 +94,13 @@
 			
 		{% endif %}
 	{% else %}
+	{#
 		{% if settings.showHumanReview and currentUser.can('altTextGeneratorHumanReview') %}
 		<label>
 		<input type="radio"  name="assets[{{ apiCall.id }}]" value="requestHuman">  Request&nbsp;human&nbsp;review
 		</label>
 		{% endif %}
+		#}
 	{% endif %}
 		{% if settings.showHumanReview and currentUser.can('altTextGeneratorHumanReview') and currentUser.can('altTextGeneratorRequestRefresh') %}
 		<br />
