@@ -16,6 +16,9 @@ use dispositiontools\craftalttextgenerator\jobs\UpdateAssetWithGeneratedAltText 
 
 use dispositiontools\craftalttextgenerator\models\AltTextAiApiCall as AltTextAiApiCallModel;
 use dispositiontools\craftalttextgenerator\records\AltTextAiApiCall as AltTextAiApiCallRecord;
+
+use dispositiontools\craftalttextgenerator\models\QueueAllReport as QueueAllReportModel;
+
 use yii\base\Component;
 
 /**
@@ -496,7 +499,7 @@ class AltTextAiApi extends Component
         if (!in_array(strtolower($asset->extension), ['jpg', 'gif', 'png', 'webp', 'jpeg'])) {
             return [
                 'error' => true,
-                'errorMessage' => "Not right kind of image",
+                'errorMessage' => "Not right kind of image: " .$asset->extension,
                 'success' => false,
             ];
         }
@@ -587,7 +590,7 @@ class AltTextAiApi extends Component
 
         $AltTextAiApiCallModel = $this->getApiCallByAssetId($assetId);
 
-        if ($AltTextAiApiCallModel && $overwrite == false) {
+        if ($AltTextAiApiCallModel && $overwrite === false) {
             $AltTextAiApiCallModel->altTextSyncStatus = "refreshing";
             $AltTextAiApiCallModel = $this->saveApiCall($AltTextAiApiCallModel);
 
@@ -905,28 +908,47 @@ class AltTextAiApi extends Component
         } else {
             $currentUserId = null;
         }
+
+        $queueAllReport  = new QueueAllReportModel();
         
         $numberOfCredits = AltTextGenerator::getInstance()->altTextAiApi->getNumberOfAltTextApiCredits();
-        $numberOfCredits = $numberOfCredits;
-    
+
+        $queueAllReport->numberOfCredits = $numberOfCredits;
         $requestCount = 0;
+        $numberRejected = 0;
+        $numberRequested = 0;
         if ($generateForNoAltText) {
             $assetsQuery = AssetElement::find()->kind('image')->hasAlt(false);
             $assets = $assetsQuery->all();
+            $numberOfAssets = count($assets);
+            $queueAllReport->numberOfAssetsWithNoAltText = count($assets);
+            ray("number of assets",$numberOfAssets);
             foreach ($assets as $asset) {
                 $requestCount++;
                 
                 if ($requestCount >= $numberOfCredits) {
+                    $numberRejected++;
+
+                    $queueAllReport->numberOfAssetsRejectedWithNoAltText++;
+                    $queueAllReport->assets[$asset->id] = "Not queued due to lack of credits";
                     continue;
                 }
                 
                 
                 $suitability = $this->checkAssetSuitability($asset);
                 
+
                 if (!$suitability['success']) {
+                    $numberRejected++;
+                    $queueAllReport->numberOfAssetsRejectedWithNoAltText++;
+                    $queueAllReport->assets[$asset->id] = $suitability['errorMessage'];
                     continue;
                 }
                 
+                $numberRequested++;
+
+                $queueAllReport->numberOfAssetsQueuedWithNoAltText++;
+                $queueAllReport->assets[$asset->id] = "Queued";
                 Queue::push(new RequestAltTextJob([
                     "assetId" => $asset->id,
                     "requestUserId" => $currentUserId,
@@ -941,19 +963,28 @@ class AltTextAiApi extends Component
         if ($generateForAltText) {
             $assetsQuery = AssetElement::find()->kind('image')->hasAlt(true);
             $assets = $assetsQuery->all();
+            $queueAllReport->numberOfAssetsWithAltText = count($assets);
             foreach ($assets as $asset) {
                 $requestCount++;
                 
                 if ($requestCount >= $numberOfCredits) {
+                    $numberRejected++;
+                    $queueAllReport->numberOfAssetsRejectedWithAltText++;
+                    $queueAllReport->assets[$asset->id] = "Not queued due to lack of credits";
                     continue;
                 }
                 
                 $suitability = $this->checkAssetSuitability($asset);
                 
                 if (!$suitability['success']) {
+                    $numberRejected++;
+                    $queueAllReport->numberOfAssetsRejectedWithAltText++;
+                    $queueAllReport->assets[$asset->id] = $suitability['errorMessage'];
                     continue;
                 }
-                
+                $numberRequested ++;
+                $queueAllReport->numberOfAssetsQueuedWithAltText++;
+                $queueAllReport->assets[$asset->id] = "Queued";
                 Queue::push(new RequestAltTextJob([
                     "assetId" => $asset->id,
                     "requestUserId" => $currentUserId,
@@ -972,7 +1003,7 @@ class AltTextAiApi extends Component
         echo "\n";
         */
         
-        return true;
+        return $queueAllReport;
     }
     
     

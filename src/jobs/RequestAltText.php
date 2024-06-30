@@ -4,6 +4,8 @@ namespace dispositiontools\craftalttextgenerator\jobs;
 
 use craft\queue\BaseJob;
 use dispositiontools\craftalttextgenerator\AltTextGenerator;
+use dispositiontools\craftalttextgenerator\errors\RequestAltTextException;
+
 
 /**
  * Request Alt Text queue job
@@ -21,7 +23,8 @@ class RequestAltText extends BaseJob
    
    
         if(isset($jobResult['error']) && $jobResult['error']) {
-            Craft::warning("Error with Request Alt Text Job with meaage: ".$jobResult['errorMessage']);
+            $errorMessage = "Error with Request Alt Text Job with meaage: ".$jobResult['errorMessage'];
+            throw new RequestAltTextException($errorMessage);
         } 
     }
 
