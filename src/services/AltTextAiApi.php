@@ -930,7 +930,12 @@ class AltTextAiApi extends Component
                     $numberRejected++;
 
                     $queueAllReport->numberOfAssetsRejectedWithNoAltText++;
-                    $queueAllReport->assets[$asset->id] = "Not queued due to lack of credits";
+                    $queueAllReport->assets[] = [
+                        "assetId" => $asset->id,
+                        "assetUrl" => $asset->url,
+                        "assetTitle" => $asset->title,
+                        "assetQueueStatus" => "Not queued due to lack of credits"
+                    ];
                     continue;
                 }
                 
@@ -941,7 +946,12 @@ class AltTextAiApi extends Component
                 if (!$suitability['success']) {
                     $numberRejected++;
                     $queueAllReport->numberOfAssetsRejectedWithNoAltText++;
-                    $queueAllReport->assets[$asset->id] = $suitability['errorMessage'];
+                    $queueAllReport->assets[] = [
+                        "assetId" => $asset->id,
+                        "assetUrl" => $asset->url,
+                        "assetTitle" => $asset->title,
+                        "assetQueueStatus" =>  $suitability['errorMessage']
+                    ];
                     continue;
                 }
                 
@@ -970,7 +980,14 @@ class AltTextAiApi extends Component
                 if ($requestCount >= $numberOfCredits) {
                     $numberRejected++;
                     $queueAllReport->numberOfAssetsRejectedWithAltText++;
-                    $queueAllReport->assets[$asset->id] = "Not queued due to lack of credits";
+
+
+                    $queueAllReport->assets[] = [
+                        "assetId" => $asset->id,
+                        "assetUrl" => $asset->url,
+                        "assetTitle" => $asset->title,
+                        "assetQueueStatus" =>  "Not queued due to lack of credits"
+                    ];
                     continue;
                 }
                 
@@ -979,7 +996,13 @@ class AltTextAiApi extends Component
                 if (!$suitability['success']) {
                     $numberRejected++;
                     $queueAllReport->numberOfAssetsRejectedWithAltText++;
-                    $queueAllReport->assets[$asset->id] = $suitability['errorMessage'];
+
+                    $queueAllReport->assets[] = [
+                        "assetId" => $asset->id,
+                        "assetUrl" => $asset->url,
+                        "assetTitle" => $asset->title,
+                        "assetQueueStatus" =>  $suitability['errorMessage']
+                    ];
                     continue;
                 }
                 $numberRequested ++;
