@@ -922,7 +922,6 @@ class AltTextAiApi extends Component
             $assets = $assetsQuery->all();
             $numberOfAssets = count($assets);
             $queueAllReport->numberOfAssetsWithNoAltText = count($assets);
-            ray("number of assets",$numberOfAssets);
             foreach ($assets as $asset) {
                 $requestCount++;
                 
@@ -958,7 +957,12 @@ class AltTextAiApi extends Component
                 $numberRequested++;
 
                 $queueAllReport->numberOfAssetsQueuedWithNoAltText++;
-                $queueAllReport->assets[$asset->id] = "Queued";
+                $queueAllReport->assets[] = [
+                    "assetId" => $asset->id,
+                    "assetUrl" => $asset->url,
+                    "assetTitle" => $asset->title,
+                    "assetQueueStatus" => "Queued"
+                ];
                 Queue::push(new RequestAltTextJob([
                     "assetId" => $asset->id,
                     "requestUserId" => $currentUserId,
