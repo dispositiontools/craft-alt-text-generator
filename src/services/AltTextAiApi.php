@@ -895,8 +895,8 @@ class AltTextAiApi extends Component
    
     
     
-    // AltTextGenerator::getInstance()->altTextAiApi->queueAllImages($generateForNoAltText, $generateForAltText);
-    public function queueAllImages($generateForNoAltText = false , $generateForAltText = false)
+    // AltTextGenerator::getInstance()->altTextAiApi->queueAllImages($generateForNoAltText, $generateForAltText, $overwrite);
+    public function queueAllImages($generateForNoAltText = false , $generateForAltText = false, $overwrite = false)
     {
         $websiteUrl = rtrim(UrlHelper::baseSiteUrl(), "/");
                 
@@ -967,6 +967,7 @@ class AltTextAiApi extends Component
                     "assetId" => $asset->id,
                     "requestUserId" => $currentUserId,
                     "actionType" => "Queue all",
+                    "overwrite" => $overwrite
                 ]));
                 
                 unset($suitability);
@@ -1016,6 +1017,7 @@ class AltTextAiApi extends Component
                     "assetId" => $asset->id,
                     "requestUserId" => $currentUserId,
                     "actionType" => "Queue all",
+                    "overwrite" => $overwrite
                 ]));
                 
                 unset($suitability);
