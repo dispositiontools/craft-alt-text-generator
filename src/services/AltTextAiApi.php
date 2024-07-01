@@ -923,7 +923,7 @@ class AltTextAiApi extends Component
             $numberOfAssets = count($assets);
             $queueAllReport->numberOfAssetsWithNoAltText = count($assets);
             foreach ($assets as $asset) {
-                $requestCount++;
+                
                 
                 if ($requestCount >= $numberOfCredits) {
                     $numberRejected++;
@@ -969,7 +969,7 @@ class AltTextAiApi extends Component
                     "actionType" => "Queue all",
                     "overwrite" => $overwrite
                 ]));
-                
+                $requestCount++;
                 unset($suitability);
             }
             unset($assets);
@@ -980,7 +980,7 @@ class AltTextAiApi extends Component
             $assets = $assetsQuery->all();
             $queueAllReport->numberOfAssetsWithAltText = count($assets);
             foreach ($assets as $asset) {
-                $requestCount++;
+                
                 
                 if ($requestCount >= $numberOfCredits) {
                     $numberRejected++;
@@ -1019,7 +1019,7 @@ class AltTextAiApi extends Component
                     "actionType" => "Queue all",
                     "overwrite" => $overwrite
                 ]));
-                
+                $requestCount++;
                 unset($suitability);
             }
             unset($assets);
