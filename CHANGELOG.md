@@ -1,5 +1,9 @@
 # Release Notes for Alt text Generator
 
+## v5.1.1 - 2024-07-01
+
+### Fixed
+- An issue where the queue all function was incorrectly counting the number of added assets fixing (Issue #6)[https://github.com/dispositiontools/craft-alt-text-generator/issues/6] with thanks to (@sgtpenguin)[https://github.com/sgtpenguin]
 
 ## v5.1.0 - 2024-06-30
 
