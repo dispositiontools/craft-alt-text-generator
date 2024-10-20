@@ -19,11 +19,21 @@
 				  <label><strong>Current:</strong></label>
 			 </div>
 			  <div>
-				  {% if asset.alt %}
+				{% if settings.customField  %}
+				  	{% if asset.alt %}
 					  {{ asset.alt }}
-				 {% else %}
-					 No alt text
-				 {% endif %}
+					{% else %}
+						 No alt text
+				 	{% endif %}
+				{% elseif asset.getFieldLayout().getFieldByHandle( settings.customField ) %}
+
+					{% if {{ _context[ settings.customField ]  }} %}
+					  {{ _context[ settings.customField ]  }}
+					{% else %}
+						 No alt text
+				 	{% endif %}
+
+				{% endif %}
 			  </div>
 		 </div>
 		 {% endif %}
