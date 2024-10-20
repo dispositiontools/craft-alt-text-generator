@@ -1071,9 +1071,6 @@ class AltTextAiApi extends Component
                     $assetsQuery = AssetElement::find()->kind('image')->hasAlt(false);
                 }   
             }
-            else{
-                $assetsQuery = AssetElement::find()->kind('image')->hasAlt(false);
-            }
 
             
            
@@ -1157,9 +1154,7 @@ class AltTextAiApi extends Component
                     $assetsQuery = AssetElement::find()->kind('image')->hasAlt(true);
                 }   
             }
-            else{
-                $assetsQuery = AssetElement::find()->kind('image')->hasAlt(true);
-            }
+
 
 
             $assets = $assetsQuery->all();
