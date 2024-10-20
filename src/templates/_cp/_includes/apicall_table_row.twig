@@ -20,7 +20,7 @@
 			 </div>
 			  <div>
 
-			   	{% if settings.customField is not defined   %}
+			   	{% if settings.customField is not defined or settings.customField == "alt" or settings.customField == ""  %}
 				  	{% if asset.alt %}
 					  {{ asset.alt }}
 					{% else %}
@@ -28,8 +28,8 @@
 				 	{% endif %}
 				{% elseif asset.getFieldLayout().getFieldByHandle( settings.customField ) %}
 
-					{% if  _context['asset' ][settings.customField]  %}
-					  {{ _context['asset' ][ settings.customField ]  }}
+					{% if  _context['asset'][settings.customField]  %}
+					  {{ _context['asset'][ settings.customField ]  }}
 					{% else %}
 						 No alt text
 				 	{% endif %}
