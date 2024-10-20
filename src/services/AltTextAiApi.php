@@ -20,6 +20,7 @@ use dispositiontools\craftalttextgenerator\records\AltTextAiApiCall as AltTextAi
 use dispositiontools\craftalttextgenerator\models\QueueAllReport as QueueAllReportModel;
 
 use yii\base\Component;
+use Exception;
 
 /**
  * Alt Text Ai Api service
@@ -1029,7 +1030,12 @@ class AltTextAiApi extends Component
     {
         $websiteUrl = rtrim(UrlHelper::baseSiteUrl(), "/");
                 
-        
+        $settings = AltTextGenerator::getInstance()->getSettings();
+        $customField = false;
+        if(isset($settings->customField))
+        {
+            $customField = $settings->customField;
+        }
         
         $currentUser = Craft::$app->getUser()->getIdentity();
         if ($currentUser) {
@@ -1046,8 +1052,34 @@ class AltTextAiApi extends Component
         $requestCount = 0;
         $numberRejected = 0;
         $numberRequested = 0;
+        
         if ($generateForNoAltText) {
-            $assetsQuery = AssetElement::find()->kind('image')->hasAlt(false);
+
+
+            if( $customField && ( $settings->customField == "alt" || $settings->customField == null ))
+            {
+                $assetsQuery = AssetElement::find()->kind('image')->hasAlt(false);
+            }
+            else
+            {
+                try
+                {
+                    $assetsQuery = AssetElement::find()->kind('image')->$customField(':empty:');
+                }
+                catch (Exception $e)
+                {
+                    $assetsQuery = AssetElement::find()->kind('image')->hasAlt(false);
+                }   
+            }
+            else{
+                $assetsQuery = AssetElement::find()->kind('image')->hasAlt(false);
+            }
+
+            
+           
+
+
+
             $assets = $assetsQuery->all();
             $numberOfAssets = count($assets);
             $queueAllReport->numberOfAssetsWithNoAltText = count($assets);
@@ -1106,6 +1138,30 @@ class AltTextAiApi extends Component
         
         if ($generateForAltText) {
             $assetsQuery = AssetElement::find()->kind('image')->hasAlt(true);
+
+
+    
+
+            if( $customField && ( $settings->customField == "alt" || $settings->customField == null ))
+            {
+                $assetsQuery = AssetElement::find()->kind('image')->hasAlt(true);
+            }
+            else
+            {
+                try
+                {
+                    $assetsQuery = AssetElement::find()->kind('image')->$customField(':notempty:');
+                }
+                catch (Exception $e)
+                {
+                    $assetsQuery = AssetElement::find()->kind('image')->hasAlt(true);
+                }   
+            }
+            else{
+                $assetsQuery = AssetElement::find()->kind('image')->hasAlt(true);
+            }
+
+
             $assets = $assetsQuery->all();
             $queueAllReport->numberOfAssetsWithAltText = count($assets);
             foreach ($assets as $asset) {
