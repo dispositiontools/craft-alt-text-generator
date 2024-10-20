@@ -27,8 +27,8 @@
 				 	{% endif %}
 				{% elseif asset.getFieldLayout().getFieldByHandle( settings.customField ) %}
 
-					{% if {{ _context[ settings.customField ]  }} %}
-					  {{ _context[ settings.customField ]  }}
+					{% if  _context['asset'][settings.customField]  %}
+					  {{ _context['asset' ][ settings.customField ]  }}
 					{% else %}
 						 No alt text
 				 	{% endif %}
