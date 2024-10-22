@@ -558,6 +558,8 @@ class AltTextAiApi extends Component
 
         // is the element type webp / png / jpg / BMP
         if (!$asset->kind == "image") {
+            $logMessage = "Asset Id: ".$asset->id. "Not an image";
+            AltTextGenerator::info($logMessage);
             return [
                 'error' => true,
                 'errorMessage' => "Not an image",
@@ -567,6 +569,8 @@ class AltTextAiApi extends Component
         
         
         if (!in_array(strtolower($asset->extension), ['jpg', 'gif', 'png', 'webp', 'jpeg'])) {
+            $logMessage = "Asset Id: ".$asset->id. "Not right kind of image: " .$asset->extension;
+            AltTextGenerator::info($logMessage);
             return [
                 'error' => true,
                 'errorMessage' => "Not right kind of image: " .$asset->extension,
@@ -581,6 +585,8 @@ class AltTextAiApi extends Component
                 ( $settings->useImagePreviewUrl == "never" || $settings->useImagePreviewUrl == null || $settings->useImagePreviewUrl == false)
                 && $asset->size > 10000000
             ) {
+                $logMessage = "Asset Id: ".$asset->id. "Image file size is over 10mb ";
+                AltTextGenerator::info($logMessage);
             return [
                 'error' => true,
                 'errorMessage' => "Image file size is over 10mb",
@@ -590,6 +596,8 @@ class AltTextAiApi extends Component
         
         // check if the image is over 50 x 50
         if ($asset->width < 51 || $asset->height < 51) {
+            $logMessage = "Asset Id: ".$asset->id. "Image too small ";
+                AltTextGenerator::info($logMessage);
             return [
                 'error' => true,
                 'errorMessage' => "Image needs to over 50 x 50 pixels",
@@ -800,13 +808,14 @@ class AltTextAiApi extends Component
 
 
         $resultsJson = $this->makeCreateImageApiCall($callDetails);
-
+        AltTextGenerator::info($resultsJson);
         $AltTextAiApiCallModel->response = $resultsJson;
         $AltTextAiApiCallModel->dateResponse = DateTimeHelper::currentUTCDateTime();
         $AltTextAiApiCallModel->altTextSyncStatus = "received";
         $AltTextAiApiCallModel = $this->saveApiCall($AltTextAiApiCallModel);
 
         $resultsArray = json_decode($resultsJson, true);
+       
 
         if($resultsArray && array_key_exists('errors', $resultsArray ) && count($resultsArray['errors']) > 0)
         {
@@ -1256,7 +1265,19 @@ class AltTextAiApi extends Component
         );
         
         $context = stream_context_create($options);
-        $jsonResponse = file_get_contents($url, false, $context);
+        $jsonResponse = @file_get_contents($url, false, $context);
+
+        // Check if response is false (indicating an error)
+        if ($jsonResponse === false) {
+            // Parse the HTTP response headers to get the status code
+            if (isset($http_response_header)) {
+                // Extract the HTTP status code from the response headers
+                $status_line = $http_response_header[0];
+                $jsonResponse = '{"errors": "'.$status_line.'" }';
+            } else {
+                $jsonResponse = '{"errors":"HTTP request failed: No headers returned." }';
+            }
+        } 
         
         return $jsonResponse;
     }

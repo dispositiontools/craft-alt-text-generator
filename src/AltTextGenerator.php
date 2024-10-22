@@ -31,6 +31,11 @@ use dispositiontools\craftalttextgenerator\utilities\AltTextGeneratorUtility;
 use dispositiontools\craftalttextgenerator\widgets\ImageAltTextStats;
 use yii\base\Event;
 
+use craft\log\MonologTarget;
+use Monolog\Formatter\LineFormatter;
+use Psr\Log\LogLevel;
+use yii\log\Logger;
+
 /**
  * Alt text Generator plugin
  *
@@ -201,6 +206,8 @@ class AltTextGenerator extends Plugin
                 $event->types[] = ImageAltTextStats::class;
             }
         });
+
+        $this->_registerLogTarget();
     }
     
          
@@ -229,5 +236,41 @@ class AltTextGenerator extends Plugin
         } else {
             return null;
         }
+    }
+
+
+
+        /**
+     * Logs an informational message to our custom log target.
+     */
+    public static function info(string $message): void
+    {
+        Craft::info($message, 'alt-text-generator');
+    }
+    
+    /**
+     * Logs an error message to our custom log target.
+     */
+    public static function error(string $message): void
+    {
+        Craft::error($message, 'alt-text-generator');
+    }
+    
+    /**
+     * Registers a custom log target, keeping the format as simple as possible.
+     */
+    private function _registerLogTarget(): void
+    {
+        Craft::getLogger()->dispatcher->targets[] = new MonologTarget([
+            'name' => 'alt-text-generator',
+            'categories' => ['alt-text-generator'],
+            'level' => LogLevel::INFO,
+            'logContext' => false,
+            'allowLineBreaks' => false,
+            'formatter' => new LineFormatter(
+                format: "%datetime% %message%\n",
+                dateFormat: 'Y-m-d H:i:s',
+            ),
+        ]);
     }
 }
