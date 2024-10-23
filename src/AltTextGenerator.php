@@ -259,6 +259,7 @@ class AltTextGenerator extends Plugin
     /**
      * Registers a custom log target, keeping the format as simple as possible.
      */
+    /*
     private function _registerLogTarget(): void
     {
         Craft::getLogger()->dispatcher->targets[] = new MonologTarget([
@@ -273,4 +274,5 @@ class AltTextGenerator extends Plugin
             ),
         ]);
     }
+        */
 }
