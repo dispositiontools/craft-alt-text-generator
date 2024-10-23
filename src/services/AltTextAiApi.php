@@ -339,8 +339,6 @@ class AltTextAiApi extends Component
             $requestId = $AltTextAiApiCallModel->id;
         }
         
-        
-        
         $imageDetails = $this->makeGetImageByAssetIdApiCall($requestId);
         
         if (!$imageDetails) {
