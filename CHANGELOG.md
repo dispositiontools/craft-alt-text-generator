@@ -1,5 +1,15 @@
 # Release Notes for Alt text Generator
 
+
+## v5.2.0 - 2024-10-24
+
+### Added
+- Added a new model type called "Terse"
+- Added the ability to change the field where the alt text is saved. This is changed via settings. At the moment this lists Plain Text fields on asset field layouts. Please get in contact if there are other fields that should be listed here.
+- Added a new utility function to queue all images to be resynced. This can be helpful when changing the field the alt text is to be saved
+- Added ability to use a Craft image preview url rather than the main image url to send to alttext.ai. This allows alt text generation on larger images as well images that don't have a public url. With thanks to (john-henry)[https://github.com/dispositiontools/craft-alt-text-generator/issues/4]
+- Increased the size of image that can be sent to 16MB as per the updated API.
+
 ## v5.1.1 - 2024-07-01
 
 ### Fixed
