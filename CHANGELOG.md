@@ -1,6 +1,6 @@
 # Release Notes for Alt text Generator
 
-## v4.2.0 - 2024-10-19
+## v4.2.0 - 2024-10-24
 
 ### Added
 - Added a new model type called "Terse"

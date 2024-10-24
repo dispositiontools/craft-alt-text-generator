@@ -410,14 +410,14 @@ class AltTextAiApi extends Component
             
             if ($updateModel) {
                 $logMessage = "Refreshing image: updating apicall: ".$AltTextAiApiCallModel->id;
-                 AltTextGenerator::info($logMessage);
-                AltTextGenerator::info($imageDetails);
+                //AltTextGenerator::info($logMessage);
+                //AltTextGenerator::info($imageDetails);
                 $this->saveApiCall($AltTextAiApiCallModel);
             }
         }
         else{
-            $logMessage = "Refreshing image: alt text array not found: apicall: ".$AltTextAiApiCallModel->id;
-                 AltTextGenerator::info($logMessage);
+            //$logMessage = "Refreshing image: alt text array not found: apicall: ".$AltTextAiApiCallModel->id;
+            //AltTextGenerator::info($logMessage);
         }
         
         
