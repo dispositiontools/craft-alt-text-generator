@@ -361,6 +361,8 @@ class AltTextAiApi extends Component
             AltTextGenerator::info($logMessage);
             return false;
         }
+
+        $settings = AltTextGenerator::getInstance()->getSettings();
         
         $updateModel = false;
         if ($imageDetailsArray['alt_text']) {
@@ -377,6 +379,33 @@ class AltTextAiApi extends Component
                 $AltTextAiApiCallModel->generatedAltText = $imageDetailsArray['alt_text'];
                 $AltTextAiApiCallModel->altTextSyncStatus = "review";
                 $updateModel = true;
+            }elseif($imageDetailsArray['alt_text'] == $AltTextAiApiCallModel->generatedAltText)
+            {
+
+                if(isset($settings->customField) && ( $settings->customField == "alt" || $settings->customField == null ))
+                {
+                   
+                   $currentAltText =  $asset->alt;
+                }
+                elseif( $asset->getFieldLayout()->getFieldByHandle($settings->customField) )
+                {
+                     
+                    $currentAltText = $asset->getFieldValue($settings->customField);
+                }
+                else{
+                    $currentAltText =  $asset->alt;
+                }
+
+                if(trim($currentAltText) == trim($imageDetailsArray['alt_text']))
+                {
+                    $AltTextAiApiCallModel->altTextSyncStatus = "synced";
+                    $updateModel = true;
+                }
+                else{
+                    $AltTextAiApiCallModel->altTextSyncStatus = "review";
+                    $updateModel = true;
+                }
+
             }
             
             if ($updateModel) {
