@@ -357,6 +357,8 @@ class AltTextAiApi extends Component
         $asset = AssetElement::find()->id($AltTextAiApiCallModel->assetId)->one();
               
         if (!$asset) {
+            $logMessage = "Refreshing image: Not found asset: ".$AltTextAiApiCallModel->assetId;
+            AltTextGenerator::info($logMessage);
             return false;
         }
         
@@ -378,8 +380,15 @@ class AltTextAiApi extends Component
             }
             
             if ($updateModel) {
+                $logMessage = "Refreshing image: updating apicall: ".$AltTextAiApiCallModel->id;
+                 AltTextGenerator::info($logMessage);
+                AltTextGenerator::info($imageDetails);
                 $this->saveApiCall($AltTextAiApiCallModel);
             }
+        }
+        else{
+            $logMessage = "Refreshing image: alt text array not found: apicall: ".$AltTextAiApiCallModel->id;
+                 AltTextGenerator::info($logMessage);
         }
         
         
@@ -581,17 +590,17 @@ class AltTextAiApi extends Component
         }
         
         
-        // check if the image is less than 10mb
+        // check if the image is less than 16mb
           
         if (
                 ( $settings->useImagePreviewUrl == "never" || $settings->useImagePreviewUrl == null || $settings->useImagePreviewUrl == false)
-                && $asset->size > 10000000
+                && $asset->size > 16000000
             ) {
-                $logMessage = "Asset Id: ".$asset->id. "Image file size is over 10mb ";
+                $logMessage = "Asset Id: ".$asset->id. "Image file size is over 16mb ";
                 AltTextGenerator::info($logMessage);
             return [
                 'error' => true,
-                'errorMessage' => "Image file size is over 10mb",
+                'errorMessage' => "Image file size is over 16mb",
                 'success' => false,
             ];
         }

@@ -7,6 +7,7 @@
 - Added the ability to change the field where the alt text is saved. This is changed via settings. At the moment this lists Plain Text fields on asset field layouts. Please get in contact if there are other fields that should be listed here.
 - Added a new utility function to queue all images to be resynced. This can be helpful when changing the field the alt text is to be saved
 - Added ability to use a Craft image preview url rather than the main image url to send to alttext.ai. This allows alt text generation on larger images as well images that don't have a public url.
+- Increased the size of image that can be sent to 16MB as per the updated API.
 
 
 
