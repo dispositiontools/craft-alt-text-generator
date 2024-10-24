@@ -30,7 +30,7 @@ class CpController extends Controller
        
             
         $settings = AltTextGenerator::getInstance()->getSettings();
-        if (!$settings->apiKey) {
+        if (!$settings->getApiKey(true)) {
             return $this->renderTemplate('alt-text-generator/_cp/setup', ['title' => 'Alt Text Generator']);
         }
 
@@ -122,8 +122,23 @@ class CpController extends Controller
         ]);
         //return $this->asSuccess(json_encode($queueAllImagesReport));
     }
+
+
     
     
+    /**
+     * alt-text-generator/cp/queue-all-images-for-resync action
+    */
+    public function actionQueueAllImagesForResync(): Response
+    {
+        $imagesQueuedForResync = AltTextGenerator::getInstance()->altTextAiApi->queueAllImagesForResync();
+
+        Craft::$app->getSession()->setSuccess( $imagesQueuedForResync['imagesQueue']. ' images queue for resync');
+
+        return $this->redirectToPostedUrl();
+    }
+
+
     /**
      * alt-text-generator/cp/refresh-api-token-count action
     */

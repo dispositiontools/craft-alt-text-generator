@@ -20,6 +20,7 @@ use dispositiontools\craftalttextgenerator\records\AltTextAiApiCall as AltTextAi
 use dispositiontools\craftalttextgenerator\models\QueueAllReport as QueueAllReportModel;
 
 use yii\base\Component;
+use Exception;
 
 /**
  * Alt Text Ai Api service
@@ -270,6 +271,37 @@ class AltTextAiApi extends Component
          
         return true;
     }
+
+
+     /*
+         Queue all imges for resyncing. 
+    */
+    
+    // AltTextGenerator::getInstance()->queueAllImagesForResync();
+    public function queueAllImagesForResync()
+    {
+
+        // select all api calls where the status is synced
+        $recordsQuery = AltTextAiApiCallRecord::find();
+      
+        $recordsQuery->where(["altTextSyncStatus" => "synced"]);
+        $recordsQuery->andWhere(["dateDeleted" => null]);
+        $records = $recordsQuery->all();
+
+        foreach ($records as $record) {
+            $model = new AltTextAiApiCallModel($record->getAttributes());
+            if( $model->generatedAltText != null) {
+                Queue::push(new UpdateAssetWithGeneratedAltTextJob([
+                    "apiCallId" => $model->id,
+                    "type" => "generated",
+                ]));
+            }
+            unset( $model);
+        }
+           
+        return ["imagesQueue" => count($records)];
+    
+    }
     
     
     public function getAssetAndCheck($assetId)
@@ -307,9 +339,11 @@ class AltTextAiApi extends Component
             $requestId = $AltTextAiApiCallModel->id;
         }
         
-        
-        
         $imageDetails = $this->makeGetImageByAssetIdApiCall($requestId);
+
+        $logMessage = "Refreshing image response: ".$apiCallId;
+        AltTextGenerator::info($logMessage);
+        AltTextGenerator::info($imageDetails);
         
         if (!$imageDetails) {
             return false;
@@ -323,8 +357,12 @@ class AltTextAiApi extends Component
         $asset = AssetElement::find()->id($AltTextAiApiCallModel->assetId)->one();
               
         if (!$asset) {
+            $logMessage = "Refreshing image: Not found asset: ".$AltTextAiApiCallModel->assetId;
+            AltTextGenerator::info($logMessage);
             return false;
         }
+
+        $settings = AltTextGenerator::getInstance()->getSettings();
         
         $updateModel = false;
         if ($imageDetailsArray['alt_text']) {
@@ -341,11 +379,45 @@ class AltTextAiApi extends Component
                 $AltTextAiApiCallModel->generatedAltText = $imageDetailsArray['alt_text'];
                 $AltTextAiApiCallModel->altTextSyncStatus = "review";
                 $updateModel = true;
+            }elseif($imageDetailsArray['alt_text'] == $AltTextAiApiCallModel->generatedAltText)
+            {
+
+                if(isset($settings->customField) && ( $settings->customField == "alt" || $settings->customField == null ))
+                {
+                   
+                   $currentAltText =  $asset->alt;
+                }
+                elseif( $asset->getFieldLayout()->getFieldByHandle($settings->customField) )
+                {
+                     
+                    $currentAltText = $asset->getFieldValue($settings->customField);
+                }
+                else{
+                    $currentAltText =  $asset->alt;
+                }
+
+                if(trim($currentAltText) == trim($imageDetailsArray['alt_text']))
+                {
+                    $AltTextAiApiCallModel->altTextSyncStatus = "synced";
+                    $updateModel = true;
+                }
+                else{
+                    $AltTextAiApiCallModel->altTextSyncStatus = "review";
+                    $updateModel = true;
+                }
+
             }
             
             if ($updateModel) {
+                $logMessage = "Refreshing image: updating apicall: ".$AltTextAiApiCallModel->id;
+                //AltTextGenerator::info($logMessage);
+                //AltTextGenerator::info($imageDetails);
                 $this->saveApiCall($AltTextAiApiCallModel);
             }
+        }
+        else{
+            //$logMessage = "Refreshing image: alt text array not found: apicall: ".$AltTextAiApiCallModel->id;
+            //AltTextGenerator::info($logMessage);
         }
         
         
@@ -369,6 +441,7 @@ class AltTextAiApi extends Component
         if (!$AltTextAiApiCallModel->assetId) {
             return false;
         }
+        $settings = AltTextGenerator::getInstance()->getSettings();
       
         // get Asset
         $asset = $this->getAssetAndCheck($AltTextAiApiCallModel->assetId);
@@ -380,7 +453,19 @@ class AltTextAiApi extends Component
                case "generated":
                   
                      if ($AltTextAiApiCallModel->generatedAltText != "") {
-                         $asset->alt = $AltTextAiApiCallModel->generatedAltText;
+
+                         if(isset($settings->customField) && ( $settings->customField == "alt" || $settings->customField == null ))
+                         {
+                             $asset->alt = $AltTextAiApiCallModel->generatedAltText;
+                         }
+                         elseif( $asset->getFieldLayout()->getFieldByHandle($settings->customField) )
+                         {
+                             $asset->setFieldValue($settings->customField, $AltTextAiApiCallModel->generatedAltText );
+                         }
+                         else{
+                             $asset->alt = $AltTextAiApiCallModel->generatedAltText;
+                         }
+
                          $success = Craft::$app->elements->saveElement($asset);
                          $AltTextAiApiCallModel->altTextSyncStatus = "synced";
                          $AltTextAiApiCallModel = $this->saveApiCall($AltTextAiApiCallModel);
@@ -392,7 +477,19 @@ class AltTextAiApi extends Component
                case "original":
                
                   if ($AltTextAiApiCallModel->originalAltText != "") {
-                      $asset->alt = $AltTextAiApiCallModel->originalAltText;
+                
+                      if(isset($settings->customField) && ( $settings->customField == "alt" || $settings->customField == null ))
+                         {
+                             $asset->alt = $AltTextAiApiCallModel->originalAltText;
+                         }
+                         elseif( $asset->getFieldLayout()->getFieldByHandle($settings->customField) )
+                         {
+                             $asset->setFieldValue($settings->customField, $AltTextAiApiCallModel->originalAltText );
+                         }
+                         else{
+                             $asset->alt = $AltTextAiApiCallModel->originalAltText;
+                         }
+
                       $success = Craft::$app->elements->saveElement($asset);
                   }
                
@@ -401,7 +498,18 @@ class AltTextAiApi extends Component
                case "humanGenerated":
                
                   if ($AltTextAiApiCallModel->humanGeneratedAltText != "") {
-                      $asset->alt = $AltTextAiApiCallModel->humanGeneratedAltText;
+
+                      if(isset($settings->customField) && ( $settings->customField == "alt" || $settings->customField == null ))
+                         {
+                             $asset->alt = $AltTextAiApiCallModel->humanGeneratedAltText;
+                         }
+                         elseif( $asset->getFieldLayout()->getFieldByHandle($settings->customField) )
+                         {
+                             $asset->setFieldValue($settings->customField, $AltTextAiApiCallModel->humanGeneratedAltText );
+                         }
+                         else{
+                             $asset->alt = $AltTextAiApiCallModel->humanGeneratedAltText;
+                         }
                       $success = Craft::$app->elements->saveElement($asset);
                       $AltTextAiApiCallModel->altTextSyncStatus = "synced";
                       $AltTextAiApiCallModel->humanGeneratedAltText = "synced";
@@ -486,8 +594,12 @@ class AltTextAiApi extends Component
     public function checkAssetSuitability($asset): array
     {
         
+        $settings = AltTextGenerator::getInstance()->getSettings();
+
         // is the element type webp / png / jpg / BMP
         if (!$asset->kind == "image") {
+            $logMessage = "Asset Id: ".$asset->id. "Not an image";
+            AltTextGenerator::info($logMessage);
             return [
                 'error' => true,
                 'errorMessage' => "Not an image",
@@ -497,6 +609,8 @@ class AltTextAiApi extends Component
         
         
         if (!in_array(strtolower($asset->extension), ['jpg', 'gif', 'png', 'webp', 'jpeg'])) {
+            $logMessage = "Asset Id: ".$asset->id. "Not right kind of image: " .$asset->extension;
+            AltTextGenerator::info($logMessage);
             return [
                 'error' => true,
                 'errorMessage' => "Not right kind of image: " .$asset->extension,
@@ -505,18 +619,25 @@ class AltTextAiApi extends Component
         }
         
         
-        // check if the image is less than 10mb
+        // check if the image is less than 16mb
           
-        if ($asset->size > 10000000) {
+        if (
+                ( $settings->useImagePreviewUrl == "never" || $settings->useImagePreviewUrl == null || $settings->useImagePreviewUrl == false)
+                && $asset->size > 16000000
+            ) {
+                $logMessage = "Asset Id: ".$asset->id. "Image file size is over 16mb ";
+                AltTextGenerator::info($logMessage);
             return [
                 'error' => true,
-                'errorMessage' => "Image file size is over 10mb",
+                'errorMessage' => "Image file size is over 16mb",
                 'success' => false,
             ];
         }
         
         // check if the image is over 50 x 50
         if ($asset->width < 51 || $asset->height < 51) {
+            $logMessage = "Asset Id: ".$asset->id. "Image too small ";
+                AltTextGenerator::info($logMessage);
             return [
                 'error' => true,
                 'errorMessage' => "Image needs to over 50 x 50 pixels",
@@ -587,7 +708,7 @@ class AltTextAiApi extends Component
 
         // see if the asset has already been called
         // we are not allowed to recall it. so we will set it to review again
-
+        $settings = AltTextGenerator::getInstance()->getSettings();
         $AltTextAiApiCallModel = $this->getApiCallByAssetId($assetId);
 
         if ($AltTextAiApiCallModel && $overwrite === false) {
@@ -630,15 +751,21 @@ class AltTextAiApi extends Component
 
 
         // create an rquestId
-        // Craft::$app->getSystemUid()
 
         $requestId = StringHelper::toKebabCase(Craft::$app->getSystemName()) . "_" . $asset->uid . "_" . $asset->id;
 
         // create a call model
 
-        $assetUrl = $asset->url;
+        if (  $settings->useImagePreviewUrl == "always" 
+                || ( $settings->useImagePreviewUrl == "forLargeImages" && $asset->size > 10000000)
+        ) {
+            // use image preview url if it's been set in settings
+             $assetUrl = Craft::$app->getAssets()->getImagePreviewUrl($asset, 2000, 2000);
+        }else{
+            $assetUrl = $asset->url;
+        }
 
-        
+     
 
         $AltTextAiApiCallModel->assetId = $asset->id;
         $AltTextAiApiCallModel->requestId = $requestId;
@@ -652,7 +779,19 @@ class AltTextAiApi extends Component
             $AltTextAiApiCallModel->altTextSyncStatus = "called";
         }   
         
-        $AltTextAiApiCallModel->originalAltText = $asset->alt;
+     
+
+        if(isset($settings->customField) && ( $settings->customField == "alt" || $settings->customField == null ))
+        {
+            $AltTextAiApiCallModel->originalAltText = $asset->alt;
+        }
+        elseif( $asset->getFieldLayout()->getFieldByHandle($settings->customField) )
+        {
+            $AltTextAiApiCallModel->originalAltText =  $asset->getFieldValue($settings->customField );
+        }
+        else{
+            $AltTextAiApiCallModel->originalAltText = $asset->alt;
+        }
 
         if ($requestUserId) {
             $AltTextAiApiCallModel->requestUserId = $requestUserId;
@@ -709,13 +848,14 @@ class AltTextAiApi extends Component
 
 
         $resultsJson = $this->makeCreateImageApiCall($callDetails);
-
+        AltTextGenerator::info($resultsJson);
         $AltTextAiApiCallModel->response = $resultsJson;
         $AltTextAiApiCallModel->dateResponse = DateTimeHelper::currentUTCDateTime();
         $AltTextAiApiCallModel->altTextSyncStatus = "received";
         $AltTextAiApiCallModel = $this->saveApiCall($AltTextAiApiCallModel);
 
         $resultsArray = json_decode($resultsJson, true);
+       
 
         if($resultsArray && array_key_exists('errors', $resultsArray ) && count($resultsArray['errors']) > 0)
         {
@@ -729,7 +869,20 @@ class AltTextAiApi extends Component
             $AltTextAiApiCallModel->generatedAltText = $newAltText;
 
             if ($settings->useAltTextImmediately) {
-                $asset->alt = $newAltText;
+
+
+                if(isset($settings->customField) && ( $settings->customField == "alt" || $settings->customField == null ))
+                {
+                    $asset->alt = $newAltText;
+                }
+                elseif( $asset->getFieldLayout()->getFieldByHandle($settings->customField) )
+                {
+                    $asset->setFieldValue($settings->customField, $newAltText );
+                }
+                else{
+                    $asset->alt = $newAltText;
+                }
+
                 $success = Craft::$app->elements->saveElement($asset);
                 $AltTextAiApiCallModel->altTextSyncStatus = "synced";
             } else {
@@ -800,7 +953,21 @@ class AltTextAiApi extends Component
                         if ($settings->useAltTextImmediately === true) {
                             $asset = AssetElement::find()->id($AltTextAiApiCallModel->assetId)->one();
                             if ($asset) {
-                                $asset->alt = $imageResponse['alt_text'];
+                        
+
+                                if(isset($settings->customField) && ( $settings->customField == "alt" || $settings->customField == null ))
+                                {
+                                    $asset->alt = $imageResponse['alt_text'];
+                                }
+                                elseif( $asset->getFieldLayout()->getFieldByHandle($settings->customField) )
+                                {
+                                    $asset->setFieldValue($settings->customField, $imageResponse['alt_text'] );
+                                }
+                                else{
+                                    $asset->alt = $imageResponse['alt_text'];
+                                }
+
+                                
                                 $success = Craft::$app->elements->saveElement($asset);
                                 $AltTextAiApiCallModel->altTextSyncStatus = "synced";
                                 
@@ -849,7 +1016,19 @@ class AltTextAiApi extends Component
                         if ($settings->useAltTextImmediately) {
                             $asset = AssetElement::find()->id($AltTextAiApiCallModel->assetId)->one();
                             if ($asset) {
-                                $asset->alt = $imageResponse['alt_text'];
+
+                                if(isset($settings->customField) && ( $settings->customField == "alt" || $settings->customField == null ))
+                                {
+                                    $asset->alt = $imageResponse['alt_text'];
+                                }
+                                elseif( $asset->getFieldLayout()->getFieldByHandle($settings->customField) )
+                                {
+                                    $asset->setFieldValue($settings->customField,$imageResponse['alt_text'] );
+                                }
+                                else{
+                                    $asset->alt = $imageResponse['alt_text'];
+                                }
+                                
                                 $success = Craft::$app->elements->saveElement($asset);
                                 $AltTextAiApiCallModel->altTextSyncStatus = "synced";
                                 $AltTextAiApiCallModel->humanAltTextSyncStatus = "synced";
@@ -900,7 +1079,12 @@ class AltTextAiApi extends Component
     {
         $websiteUrl = rtrim(UrlHelper::baseSiteUrl(), "/");
                 
-        
+        $settings = AltTextGenerator::getInstance()->getSettings();
+        $customField = false;
+        if(isset($settings->customField))
+        {
+            $customField = $settings->customField;
+        }
         
         $currentUser = Craft::$app->getUser()->getIdentity();
         if ($currentUser) {
@@ -917,8 +1101,31 @@ class AltTextAiApi extends Component
         $requestCount = 0;
         $numberRejected = 0;
         $numberRequested = 0;
+        
         if ($generateForNoAltText) {
-            $assetsQuery = AssetElement::find()->kind('image')->hasAlt(false);
+
+
+            if( $customField && ( $settings->customField == "alt" || $settings->customField == null ))
+            {
+                $assetsQuery = AssetElement::find()->kind('image')->hasAlt(false);
+            }
+            else
+            {
+                try
+                {
+                    $assetsQuery = AssetElement::find()->kind('image')->$customField(':empty:');
+                }
+                catch (Exception $e)
+                {
+                    $assetsQuery = AssetElement::find()->kind('image')->hasAlt(false);
+                }   
+            }
+
+            
+           
+
+
+
             $assets = $assetsQuery->all();
             $numberOfAssets = count($assets);
             $queueAllReport->numberOfAssetsWithNoAltText = count($assets);
@@ -970,7 +1177,6 @@ class AltTextAiApi extends Component
                     "overwrite" => $overwrite
                 ]));
                 $requestCount++;
-                
                 unset($suitability);
             }
             unset($assets);
@@ -978,6 +1184,28 @@ class AltTextAiApi extends Component
         
         if ($generateForAltText) {
             $assetsQuery = AssetElement::find()->kind('image')->hasAlt(true);
+
+
+    
+
+            if( $customField && ( $settings->customField == "alt" || $settings->customField == null ))
+            {
+                $assetsQuery = AssetElement::find()->kind('image')->hasAlt(true);
+            }
+            else
+            {
+                try
+                {
+                    $assetsQuery = AssetElement::find()->kind('image')->$customField(':notempty:');
+                }
+                catch (Exception $e)
+                {
+                    $assetsQuery = AssetElement::find()->kind('image')->hasAlt(true);
+                }   
+            }
+
+
+
             $assets = $assetsQuery->all();
             $queueAllReport->numberOfAssetsWithAltText = count($assets);
             foreach ($assets as $asset) {
@@ -1020,9 +1248,7 @@ class AltTextAiApi extends Component
                     "actionType" => "Queue all",
                     "overwrite" => $overwrite
                 ]));
-
                 $requestCount++;
-                
                 unset($suitability);
             }
             unset($assets);
@@ -1045,7 +1271,7 @@ class AltTextAiApi extends Component
         $url = "https://alttext.ai/api/v1/images/" . $asset_id;
     
         $settings = AltTextGenerator::getInstance()->getSettings();
-        $apiKey = $settings->apiKey;
+        $apiKey = $settings->getApiKey(true);
         $options = array(
           'http' => array(
             'method' => "GET",
@@ -1067,7 +1293,7 @@ class AltTextAiApi extends Component
         $url = "https://alttext.ai/api/v1/images";
 
         $settings = AltTextGenerator::getInstance()->getSettings();
-        $apiKey = $settings->apiKey;
+        $apiKey = $settings->getApiKey(true);
         $options = array(
           'http' => array(
             'method' => "POST",
@@ -1079,7 +1305,19 @@ class AltTextAiApi extends Component
         );
         
         $context = stream_context_create($options);
-        $jsonResponse = file_get_contents($url, false, $context);
+        $jsonResponse = @file_get_contents($url, false, $context);
+
+        // Check if response is false (indicating an error)
+        if ($jsonResponse === false) {
+            // Parse the HTTP response headers to get the status code
+            if (isset($http_response_header)) {
+                // Extract the HTTP status code from the response headers
+                $status_line = $http_response_header[0];
+                $jsonResponse = '{"errors": "'.$status_line.'" }';
+            } else {
+                $jsonResponse = '{"errors":"HTTP request failed: No headers returned." }';
+            }
+        } 
         
         return $jsonResponse;
     }
@@ -1090,7 +1328,7 @@ class AltTextAiApi extends Component
         $url = "https://alttext.ai/api/v1/images/" . $asset_id . "/augment";
     
         $settings = AltTextGenerator::getInstance()->getSettings();
-        $apiKey = $settings->apiKey;
+        $apiKey = $settings->getApiKey(true);
         $options = array(
            'http' => array(
              'method' => "POST",
@@ -1114,7 +1352,7 @@ class AltTextAiApi extends Component
         $url = "https://alttext.ai/api/v1/account";
        
         $settings = AltTextGenerator::getInstance()->getSettings();
-        $apiKey = $settings->apiKey;
+        $apiKey = $settings->getApiKey(true);
 
         if (!$apiKey) {
             return false;

@@ -152,4 +152,17 @@ class ToolsController extends Controller
         echo "\n";
         return ExitCode::OK;
     }
+
+    /**
+     * alt-text-generator/tools/resync-all-images
+     */
+    public function actionResyncAllImages($apiCallId)
+    {
+        echo "Resyncing all images";
+        echo "\n";
+        AltTextGenerator::getInstance()->queueAllImagesForResync();
+        echo "\n";
+        echo "\n";
+        return ExitCode::OK;
+    }
 }

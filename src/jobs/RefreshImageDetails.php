@@ -17,7 +17,7 @@ class RefreshImageDetails extends BaseJob
     public function execute($queue): void
     {
         // ...
-        AltTextGenerator::getInstance()->altTextAiApi->RefreshImageDetailsFromAltTextAi($this->apiCallId, $this->humanRequestUserId);
+        AltTextGenerator::getInstance()->altTextAiApi->refreshImageDetailsFromAltTextAi($this->apiCallId, $this->humanRequestUserId);
     }
 
     protected function defaultDescription(): ?string

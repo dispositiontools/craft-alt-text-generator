@@ -5,7 +5,7 @@
 
 {# ... #}
 
-
+{#
 {{ forms.textField({
 	label:         "AltText.ai API Key"|t,
 	id:            'apiKey',
@@ -15,7 +15,21 @@
 	required: true,
 	errors:        settings.getErrors('apiKey')
 }) }}
+#}
 
+        <div id="url-settings" class="nested-fields ">
+            {{ forms.autosuggestField({
+                label: "AltText.ai API Key",
+                instructions: 'Please click "Refresh credits count" in the utility page after updating your API key to check your connection.',
+                id: 'apiKey',
+                class: 'ltr',
+                suggestEnvVars: true,
+                suggestAliases: true,
+                name: 'apiKey',
+                value: settings.apiKey,
+                errors: settings.getErrors('apiKey')
+            }) }}
+        </div>
 
 
  {{ forms.lightswitchField({
@@ -45,6 +59,7 @@
 			"describe-regular": "Standard model" ,
 			"describe-factual": "Matter-of-fact model" ,
 			"succinct-describe-factual": "Concise model" ,
+			"describe-terse": "Terse model (usually less than 120 characters)"
 		},
         id: 'modelName',
         name: 'modelName',
@@ -52,6 +67,7 @@
         errors: settings.getErrors('modelName')
     }) 
 }}
+
 
 {{ forms.selectField({
         label: "Language",
@@ -211,6 +227,26 @@
 
 
 
+
+{{ forms.selectField({
+        label: "Use image preview url?",
+		instructions: 'The plugin can generate a transformed version of your image before sending it to alttext.ai. This will use more resources to generate the transforms. This can also help when storing images with no public urls',
+        options: { 
+			"never":"Never",
+			"always":"Always",
+			"forLargeImages":"For large images only",
+		},
+        id: 'useImagePreviewUrl',
+        name: 'useImagePreviewUrl',
+        value: settings.useImagePreviewUrl ?? 'never',
+        errors: settings.getErrors('useImagePreviewUrl')
+    }) 
+}}
+
+
+
+
+
  {{ forms.lightswitchField({
 	label: "Do API calls async",
 	instructions: "If you use async calls please make sure your queue is process automatically",
@@ -219,7 +255,41 @@
 	on: settings.asyncApi
 }) }}
 
+{% set volumes = craft.app.getVolumes().getAllVolumes() %}
+{% set customFields = [] %}
+{% set customField = {
+					label: 'Alt (default)',
+					value: 'alt'
+				} %}
+{% set customFields = customFields|merge([customField]) %}
+{% for volume in volumes %}
+	{% set layout = volume.fieldLayout() %}
+	{% for field in layout.getCustomFields() %}
+		 {% if field.className == "craft\\fields\\PlainText" %}
+				{% set customField = {
+					label: field.name,
+					value: field.handle
+				}%}
 
+				{% set customFields = customFields|merge([customField]) %}
+		 {% endif %}
+	{% endfor %}
+{% endfor %}
+
+
+{{ forms.selectField({
+        label: "Field for Alt Text",
+		instructions: "You'll need to resync your assets after changing this setting.",
+        options: customFields,
+        id: 'customField',
+        name: 'customField',
+        value: settings.customField ?? 'alt',
+        errors: settings.getErrors('customField')
+    }) 
+}}
+
+
+{#
 <h2>Human review</h2>
 
 <p>At the moment alttext.io's API will only send Human review hooks to the web hook url saved in your alttext.ai's account</p>
@@ -241,4 +311,5 @@
 	on: settings.webhookSetInAccount
 }) }}
 
+#}
 

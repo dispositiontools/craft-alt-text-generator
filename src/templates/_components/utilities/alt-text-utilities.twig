@@ -33,7 +33,7 @@
 {{ apiCreditsCount }} credits
 </p>
 
-<form id="alt-text-generator-queue" class="utility" method="post" accept-charset="UTF-8">
+<form id="refresh-api-token-count class="utility" method="post" accept-charset="UTF-8">
 	{{ actionInput('alt-text-generator/cp/refresh-api-token-count') }}
 	{{ csrfInput() }}
 
@@ -80,6 +80,24 @@
 	</div>
 </form>
 
+
+
+<hr>
+
+<h2>Resync all images</h2>
+
+<p>This will update all images' alt text with the generated alt text where the image has previously been submitted and alt text has synced and is not currently in review or being refreshed. This can be helpful if you are changing the field you are using for your alt text.
+</p>
+<p>Images are resynced via the queue.</p>
+<p>This doesn't submit any images to altText.ai</p>
+<form id="resync-all-assets" class="utility" method="post" accept-charset="UTF-8">
+	{{ actionInput('alt-text-generator/cp/queue-all-images-for-resync') }}
+	{{ csrfInput() }}
+
+	<div class="buttons">
+		<button type="submit" class="btn submit">{{ 'Resync all images' }}</button>
+	</div>
+</form>
 
 
 <hr>
