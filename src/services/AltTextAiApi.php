@@ -340,6 +340,10 @@ class AltTextAiApi extends Component
         }
         
         $imageDetails = $this->makeGetImageByAssetIdApiCall($requestId);
+
+        $logMessage = "Refreshing image response: ".$apiCallId;
+        AltTextGenerator::info($logMessage);
+        AltTextGenerator::info($imageDetails);
         
         if (!$imageDetails) {
             return false;
