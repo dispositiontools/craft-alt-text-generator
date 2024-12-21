@@ -756,8 +756,13 @@ class AltTextAiApi extends Component
         }
         else {
             $AltTextAiApiCallModel = new AltTextAiApiCallModel();
+             = $siteId;
         }
 
+        if( empty($AltTextAiApiCallModel->siteId))
+        {
+            $AltTextAiApiCallModel->siteId = $siteId;
+        }
 
         // get the element
 		$query = AssetElement::find()->id($assetId);
