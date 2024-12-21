@@ -3,38 +3,42 @@
 namespace dispositiontools\craftalttextgenerator;
 
 use Craft;
-use craft\base\Element;
+use yii\base\Event;
+use yii\log\Logger;
 use craft\base\Model;
+use Psr\Log\LogLevel;
 use craft\base\Plugin;
-use craft\elements\Asset;
-use craft\events\ModelEvent;
-use craft\events\PluginEvent;
-use craft\events\RegisterComponentTypesEvent;
-use craft\events\RegisterElementActionsEvent;
-use craft\events\RegisterUrlRulesEvent;
-use craft\events\RegisterUserPermissionsEvent;
+use craft\base\Element;
+use craft\helpers\Html;
 use craft\helpers\Queue;
-use craft\services\Dashboard;
+use craft\elements\Asset;
+use craft\web\UrlManager;
 use craft\services\Fields;
 use craft\services\Plugins;
-use craft\services\UserPermissions;
-use craft\services\Utilities;
-use craft\web\UrlManager;
-use dispositiontools\craftalttextgenerator\elements\actions\GenerateAltText;
-use dispositiontools\craftalttextgenerator\fields\AltTextGenerator as AltTextGeneratorAlias;
-use dispositiontools\craftalttextgenerator\jobs\RequestAltText as RequestAltTextJob;
-use dispositiontools\craftalttextgenerator\models\Settings;
-use dispositiontools\craftalttextgenerator\services\AltTextAiApi;
-use dispositiontools\craftalttextgenerator\utilities\AltTextGeneratorUtility;
-
-
-use dispositiontools\craftalttextgenerator\widgets\ImageAltTextStats;
-use yii\base\Event;
-
+use craft\events\ModelEvent;
 use craft\log\MonologTarget;
+use craft\events\PluginEvent;
+use craft\services\Dashboard;
+use craft\services\Utilities;
+use craft\events\DefineHtmlEvent;
+use craft\services\UserPermissions;
 use Monolog\Formatter\LineFormatter;
-use Psr\Log\LogLevel;
-use yii\log\Logger;
+use craft\events\RegisterUrlRulesEvent;
+use craft\events\RegisterComponentTypesEvent;
+use craft\events\RegisterElementActionsEvent;
+
+
+use craft\events\RegisterUserPermissionsEvent;
+use dispositiontools\craftalttextgenerator\models\Settings;
+
+use dispositiontools\craftalttextgenerator\services\AltTextAiApi;
+use dispositiontools\craftalttextgenerator\widgets\ImageAltTextStats;
+use dispositiontools\craftalttextgenerator\elements\actions\GenerateAltText;
+use dispositiontools\craftalttextgenerator\utilities\AltTextGeneratorUtility;
+use dispositiontools\craftalttextgenerator\jobs\RequestAltText as RequestAltTextJob;
+use dispositiontools\craftalttextgenerator\elements\actions\GenerateAltTextAssetAction;
+use dispositiontools\craftalttextgenerator\fields\AltTextGenerator as AltTextGeneratorAlias;
+
 
 /**
  * Alt text Generator plugin
@@ -104,12 +108,19 @@ class AltTextGenerator extends Plugin
  
         if (Craft::$app->user->checkPermission('altTextGeneratorAssetAction')) {
             Event::on(
-                    Asset::class,
-                    Element::EVENT_REGISTER_ACTIONS,
-                    function(RegisterElementActionsEvent $event) {
-                        $event->actions[] = GenerateAltText::class;
-                    }
-                );
+                Asset::class,
+                Element::EVENT_REGISTER_ACTIONS,
+                function(RegisterElementActionsEvent $event) {
+                    $event->actions[] = GenerateAltText::class;
+                }
+            );
+            Event::on(
+                Asset::class,
+                Element::EVENT_DEFINE_ADDITIONAL_BUTTONS,
+                function (DefineHtmlEvent $event) {
+                    $this->appendAssetEditPageButtons($event);
+                }
+            );
         }
         
         
@@ -274,5 +285,46 @@ class AltTextGenerator extends Plugin
             ),
         ]);
     }
+
+
+
+	/**
+	 * @param DefineHtmlEvent $event
+	 * @return void
+	 */
+	private function appendAssetEditPageButtons(DefineHtmlEvent &$event): void {
+		/** @see Asset::getAdditionalButtons() */
+		$event->html = Html::beginTag('div', ['class' => 'btngroup']);
+		$event->html .= Html::button(Craft::t('alt-text-generator', 'Generate alt text'), [
+			'id' => 'generateAltText-btn',
+			'class' => 'btn',
+			'data' => [
+				'icon' => 'wand',
+			],
+			'aria' => [
+				'label' => Craft::t('alt-text-generator', 'Generate alt text'),
+			],
+		]);
+
+		$js = <<<JS
+            $('#generateAltText-btn').on('click', () => {
+                let id = document.querySelector("input[name='elementId']").value;
+                Craft.sendActionRequest('POST', 'alt-text-generator/cp/queue-single-alt-text', {
+                    data: {
+                        assetId: id
+                    }
+                })
+                .then((response) => {
+                    Craft.cp.displayNotice(Craft.t('alt-text-generator', 'Alt text generation queued'));
+                })
+                .catch((error) => {
+                    Craft.cp.displayError(Craft.t('alt-text-generator', 'Error queueing alt text generation'));
+                });
+            });
+        JS;
+		Craft::$app->getView()->registerJs($js);
+
+		$event->html .= Html::endTag('div');
+	}
 
 }

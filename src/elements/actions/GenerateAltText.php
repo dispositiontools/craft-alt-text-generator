@@ -50,13 +50,14 @@ class GenerateAltText extends ElementAction
 
         $returnMessage = "";
         foreach ($elements as $element) {
-            Queue::push(new RequestAltTextJob([
-                "assetId" => $element->id,
-                "requestUserId" => $currentUser->id,
-            ]));
-        }
-        /**/
-
+			Queue::push(new RequestAltTextJob([
+				"assetId" => $element->id,
+				"requestUserId" => $currentUser->id,
+				"overwrite" => true,
+				"siteId" => $currentSite->id
+			]));
+		}
+ 
         $this->setMessage($numberOfElements . " elements have been queued with alttext.ai for alt text generation.");
 
         return true;

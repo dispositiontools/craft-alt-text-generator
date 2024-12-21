@@ -98,6 +98,7 @@ Number of assets rejected with alt text : <strong>{{ queueAllImagesReport.number
 <thead>
 <tr>
 	<th>Asset Id</th>
+	<th>Site Id</th>
 	<th>Title</th>
 	<th>Status</th>
 </tr>
@@ -107,6 +108,7 @@ Number of assets rejected with alt text : <strong>{{ queueAllImagesReport.number
 {% for assetDetails  in queueAllImagesReport.assets %}
 <tr>
 	<td>{{ assetDetails.assetId }}</td>
+	<td>{{ assetDetails.siteId }}</td>
 	<td><a href="{{ assetDetails.assetUrl }}" target="_blank">{{ assetDetails.assetTitle }}</a></td>
 	<td>{{ assetDetails.assetQueueStatus }}</td>
 </tr>

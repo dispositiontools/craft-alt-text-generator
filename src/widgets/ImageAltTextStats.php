@@ -28,15 +28,22 @@ class ImageAltTextStats extends Widget
 
     public function getBodyHtml(): ?string
     {
-        $stats = AltTextGenerator::getInstance()->altTextAiApi->statsImagesWithAltText();
+        $siteStats = AltTextGenerator::getInstance()->altTextAiApi->statsImagesWithAltText();
         $numberOfAltTextsToReview = AltTextGenerator::getInstance()->altTextAiApi->getNumberOfAltTextsToReview();
         // todo: replace with custom body HTML
-        $html = "<p>";
+
+        foreach($siteStats as $siteId => $stats)
+        {
+            $html = "<p>";
+            $html .= "Site Id: " . $siteId;
+            $html .= "<br />";
         
-        $html .= "Images with alt text: " . $stats['imagesWithAltText'];
-        $html .= "<br />";
-        $html .= "Images without alt text: " . $stats['imagesWithoutAltText'];
-        $html .= "</p>";
+            $html .= "Images with alt text: " . $stats['imagesWithAltText'];
+            $html .= "<br />";
+            $html .= "Images without alt text: " . $stats['imagesWithoutAltText'];
+            $html .= "</p>";
+        }
+       
         
         
         $html .= "<p>";

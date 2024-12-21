@@ -2,6 +2,7 @@
 
 namespace dispositiontools\craftalttextgenerator\jobs;
 
+use Craft;
 use craft\queue\BaseJob;
 use dispositiontools\craftalttextgenerator\AltTextGenerator;
 use dispositiontools\craftalttextgenerator\errors\RequestAltTextException;
@@ -16,10 +17,14 @@ class RequestAltText extends BaseJob
     public ?int $requestUserId = null;
     public ?bool $overwrite = false;
     public ?string $actionType = "Action";
+    public ?int $siteId = null;
     
     public function execute($queue): void
     {
-        $jobResult =   AltTextGenerator::getInstance()->altTextAiApi->callAltTextAiAipi($this->assetId,  $this->actionType, false, $this->requestUserId, $this->overwrite);
+        if (empty($this->siteId)) {
+			$this->siteId = Craft::$app->getSites()->getCurrentSite()->id;
+		}
+        $jobResult =   AltTextGenerator::getInstance()->altTextAiApi->callAltTextAiAipi($this->assetId,  $this->actionType, false, $this->requestUserId, $this->overwrite, $this->siteId);
    
    
         if(isset($jobResult['error']) && $jobResult['error']) {

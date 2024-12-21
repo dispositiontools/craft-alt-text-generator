@@ -5,7 +5,7 @@ namespace dispositiontools\craftalttextgenerator\controllers;
 use Craft;
 use craft\web\Controller;
 use dispositiontools\craftalttextgenerator\AltTextGenerator;
-
+use dispositiontools\craftalttextgenerator\jobs\RequestAltText as RequestAltTextJob;
 use yii\web\Response;
 
 /**
@@ -91,7 +91,8 @@ class CpController extends Controller
         $templateParams = [
             'title' => 'Alt Text Generator',
             'settings' => $settings,
-            'apiCalls' => AltTextGenerator::getInstance()->altTextAiApi->getApiCalls(['where' =>
+            'apiCalls' => AltTextGenerator::getInstance()->altTextAiApi->getApiCalls([
+                'where' =>
                 [
                     'altTextSyncStatus' => ['errors'],
                 ],
@@ -163,4 +164,27 @@ class CpController extends Controller
         // Go through each type of edit and get it done.
         return $this->redirectToPostedUrl();
     }
+
+    /**
+	 * alt-text-generator/cp/queue-single-alt-text action
+	 */
+	public function actionQueueSingleAltText(): Response {
+		$this->requirePostRequest();
+		$this->requireAcceptsJson();
+
+		$assetId = Craft::$app->getRequest()->getRequiredParam('assetId');
+
+		$siteId = Craft::$app->request->getQueryParam('site');
+		$currentSite = $siteId ? Craft::$app->getSites()->getSiteByHandle($siteId) : Craft::$app->getSites()->getPrimarySite();
+
+		Craft::$app->getQueue()->push(new RequestAltTextJob([
+			'assetId' => $assetId,
+			'requestUserId' => Craft::$app->getUser()->getId(),
+			'actionType' => 'Action',
+			"overwrite" => true,
+			"siteId" => $currentSite->id
+		]));
+
+		return $this->asJson(['success' => true]);
+	}
 }

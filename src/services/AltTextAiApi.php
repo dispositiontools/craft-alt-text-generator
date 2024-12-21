@@ -87,33 +87,52 @@ class AltTextAiApi extends Component
     // AltTextGenerator::getInstance()->altTextAiApi->statsImagesWithAltText( );
     public function statsImagesWithAltText(): array
     {
-        $assetsQuery = AssetElement::find()->kind('image')->hasAlt(false);
-        $assets = $assetsQuery->all();
-        $imagesWithoutAltText = 0;
-        if(is_countable($assets ))
-        {
-            $imagesWithoutAltText = count($assets);
-        }
-        unset($assets);
-        unset($assetsQuery);
-        
-       
-       
-        $assetsQuery = AssetElement::find()->kind('image')->hasAlt(true);
-        $assets = $assetsQuery->all();
-        $imagesWithAltText = 0;
-        if(is_countable($assets ))
-        {
-            $imagesWithAltText = count($assets);
-        }
+		$stats = [];
+		$sites = Craft::$app->getSites()->getAllSites();
 
-        unset($assets);
-        unset($assetsQuery);
-        
-        return [
-           'imagesWithoutAltText' => $imagesWithoutAltText,
-           'imagesWithAltText' => $imagesWithAltText,
-        ];
+		$settings = AltTextGenerator::getInstance()->getSettings();
+		$customField = $settings->customField;
+
+		foreach ($sites as $site) {
+			if ($customField && ($settings->customField == "alt" || $settings->customField == null)) {
+				$assetsQuery = AssetElement::find()->kind('image')->hasAlt(false)->siteId($site->id);
+			} else {
+				try {
+					$assetsQuery = AssetElement::find()->kind('image')->$customField(':empty:')->siteId($site->id);
+				} catch (Exception $e) {
+					$assetsQuery = AssetElement::find()->kind('image')->hasAlt(false)->siteId($site->id);
+				}
+			}
+
+			$assets = $assetsQuery->all();
+			$stats[$site->id] = [
+				'imagesWithoutAltText' => is_countable($assets) ? count($assets) : 0,
+				'imagesWithAltText' => 0
+			];
+
+            unset($assetsQuery);
+            unset($assets);
+
+			// Similar for imagesWithAltText count
+
+            if ($customField && ($settings->customField == "alt" || $settings->customField == null)) {
+				$assetsQuery = AssetElement::find()->kind('image')->hasAlt(true)->siteId($site->id);
+			} else {
+				try {
+					$assetsQuery = AssetElement::find()->kind('image')->$customField(':notempty:')->siteId($site->id);
+				} catch (Exception $e) {
+					$assetsQuery = AssetElement::find()->kind('image')->hasAlt(true)->siteId($site->id);
+				}
+			}
+
+			$assets = $assetsQuery->all();
+			$stats[$site->id]['imagesWithAltText'] = is_countable($assets) ? count($assets) : 0;
+
+            unset($assetsQuery);
+            unset($assets);
+		}
+
+		return $stats;
     }
     
     
@@ -224,7 +243,8 @@ class AltTextAiApi extends Component
                                           "assetId" => $AltTextAiApiCallModel->assetId,
                                           "overwrite" => true,
                                           "requestUserId" => $currentUserId,
-                                          "actionType" => "Review"
+                                          "actionType" => "Review",
+                                          "siteId" => $AltTextAiApiCallModel->siteId,
                                       ]));
                                       
                                      unset($AltTextAiApiCallModel);
@@ -354,13 +374,17 @@ class AltTextAiApi extends Component
             return false;
         }
         
-        $asset = AssetElement::find()->id($AltTextAiApiCallModel->assetId)->one();
-              
-        if (!$asset) {
-            $logMessage = "Refreshing image: Not found asset: ".$AltTextAiApiCallModel->assetId;
-            AltTextGenerator::info($logMessage);
-            return false;
-        }
+        $asset = AssetElement::find()->id($AltTextAiApiCallModel->assetId);
+		if ($AltTextAiApiCallModel->siteId) {
+			$asset->siteId($AltTextAiApiCallModel->siteId);
+		}
+		$asset = $asset->one();
+
+		if (!$asset) {
+			$logMessage = "Refreshing image: Not found asset: " . $AltTextAiApiCallModel->assetId . " siteId: " . $AltTextAiApiCallModel->siteId;
+			AltTextGenerator::info($logMessage);
+			return false;
+		}
 
         $settings = AltTextGenerator::getInstance()->getSettings();
         
@@ -569,17 +593,22 @@ class AltTextAiApi extends Component
     }
     
     
-    public function getApiCallByAssetId($id): ?AltTextAiApiCallModel
-    {
-        $record = AltTextAiApiCallRecord::findOne(['assetId' => $id]);
-        
-        if (!$record) {
-            return null;
-        }
-        
-        $model = new AltTextAiApiCallModel($record->getAttributes());
-        return $model;
-    }
+    public function getApiCallByAssetId($id, $siteId = null): ?AltTextAiApiCallModel {
+		$query = AltTextAiApiCallRecord::find()->where(['assetId' => $id]);
+
+		if ($siteId) {
+			$query->andWhere(['siteId' => $siteId]);
+		}
+
+		$record = $query->one();
+
+		if (!$record) {
+			return null;
+		}
+
+		$model = new AltTextAiApiCallModel($record->getAttributes());
+		return $model;
+	}
     
     
     // AltTextGenerator::getInstance()->altTextAiApi->checkGetApiCallById( $id );
@@ -703,13 +732,13 @@ class AltTextAiApi extends Component
     
     
     // AltTextGenerator::getInstance()->altTextAiApi->callAltTextAiAipi( $assetId );
-    public function callAltTextAiAipi($assetId, $requestType = "No type", $async = false, $requestUserId = false, $overwrite = false)
+    public function callAltTextAiAipi($assetId, $requestType = "No type", $async = false, $requestUserId = false, $overwrite = false, $siteId = null)
     {
 
         // see if the asset has already been called
         // we are not allowed to recall it. so we will set it to review again
         $settings = AltTextGenerator::getInstance()->getSettings();
-        $AltTextAiApiCallModel = $this->getApiCallByAssetId($assetId);
+        $AltTextAiApiCallModel = $this->getApiCallByAssetId($assetId, $siteId);
 
         if ($AltTextAiApiCallModel && $overwrite === false) {
             $AltTextAiApiCallModel->altTextSyncStatus = "refreshing";
@@ -731,7 +760,12 @@ class AltTextAiApi extends Component
 
 
         // get the element
-        $asset = AssetElement::find()->id($assetId)->one();
+		$query = AssetElement::find()->id($assetId);
+		if ($AltTextAiApiCallModel->siteId) {
+			$query->siteId($AltTextAiApiCallModel->siteId);
+		}
+
+		$asset = $query->one();
 
         if (!$asset) {
             return [
@@ -752,12 +786,12 @@ class AltTextAiApi extends Component
 
         // create an rquestId
 
-        $requestId = StringHelper::toKebabCase(Craft::$app->getSystemName()) . "_" . $asset->uid . "_" . $asset->id;
+        $requestId = StringHelper::toKebabCase(Craft::$app->getSystemName()) . "_" . $asset->uid . "_" . $asset->id . "_" . $siteId;
 
         // create a call model
 
         if (  $settings->useImagePreviewUrl == "always" 
-                || ( $settings->useImagePreviewUrl == "forLargeImages" && $asset->size > 10000000)
+                || ( $settings->useImagePreviewUrl == "forLargeImages" && $asset->size > 15900000)
         ) {
             // use image preview url if it's been set in settings
              $assetUrl = Craft::$app->getAssets()->getImagePreviewUrl($asset, 2000, 2000);
@@ -812,6 +846,12 @@ class AltTextAiApi extends Component
         {
             $lang = "en";
         }
+        if ($siteId) {
+			$site = Craft::$app->getSites()->getSiteById($siteId);
+			if ($site) {
+				$lang = strtolower(substr($site->language, 0, 2));
+			}
+		}
 
         $webHookParams = [
             'securityCode' => $settings->securityCode,
@@ -828,6 +868,7 @@ class AltTextAiApi extends Component
                 "metadata" => [
                    "assetId" => $asset->id,
                    "apiCallId" => $AltTextAiApiCallModel->id,
+                   "siteId" => $AltTextAiApiCallModel->siteId
                 ],
             ],
             "model_name" => $modelName,
@@ -1014,7 +1055,13 @@ class AltTextAiApi extends Component
                         $AltTextAiApiCallModel->humanGeneratedAltText = $imageResponse['alt_text'];
                            
                         if ($settings->useAltTextImmediately) {
-                            $asset = AssetElement::find()->id($AltTextAiApiCallModel->assetId)->one();
+                            $query = AssetElement::find()->id($AltTextAiApiCallModel->assetId);
+
+							if ($AltTextAiApiCallModel->siteId) {
+								$query->siteId($AltTextAiApiCallModel->siteId);
+							}
+
+							$asset = $query->one();
                             if ($asset) {
 
                                 if(isset($settings->customField) && ( $settings->customField == "alt" || $settings->customField == null ))
@@ -1078,7 +1125,8 @@ class AltTextAiApi extends Component
     public function queueAllImages($generateForNoAltText = false , $generateForAltText = false, $overwrite = false)
     {
         $websiteUrl = rtrim(UrlHelper::baseSiteUrl(), "/");
-                
+        $sites = Craft::$app->getSites()->getAllSites();        
+        
         $settings = AltTextGenerator::getInstance()->getSettings();
         $customField = false;
         if(isset($settings->customField))
@@ -1130,55 +1178,62 @@ class AltTextAiApi extends Component
             $numberOfAssets = count($assets);
             $queueAllReport->numberOfAssetsWithNoAltText = count($assets);
             foreach ($assets as $asset) {
+                foreach ($sites as $site) {
                 
-                
-                if ($requestCount >= $numberOfCredits) {
-                    $numberRejected++;
+                    if ($requestCount >= $numberOfCredits) {
+                        $numberRejected++;
 
-                    $queueAllReport->numberOfAssetsRejectedWithNoAltText++;
+                        $queueAllReport->numberOfAssetsRejectedWithNoAltText++;
+                        $queueAllReport->assets[] = [
+                            "assetId" => $asset->id,
+                            "assetUrl" => $asset->url,
+                            "assetTitle" => $asset->title,
+                            "siteId" => $site->id,
+                            "assetQueueStatus" => "Not queued due to lack of credits"
+                        ];
+                        continue;
+                    }
+                    
+                    
+                    $suitability = $this->checkAssetSuitability($asset);
+                    
+
+                    if (!$suitability['success']) {
+                        $numberRejected++;
+                        $queueAllReport->numberOfAssetsRejectedWithNoAltText++;
+                        $queueAllReport->assets[] = [
+                            "assetId" => $asset->id,
+                            "assetUrl" => $asset->url,
+                            "assetTitle" => $asset->title,
+                            "siteId" => $site->id,
+                            "assetQueueStatus" =>  $suitability['errorMessage']
+                        ];
+                        continue;
+                    }
+                    
+                    $numberRequested++;
+
+                    $queueAllReport->numberOfAssetsQueuedWithNoAltText++;
                     $queueAllReport->assets[] = [
                         "assetId" => $asset->id,
                         "assetUrl" => $asset->url,
                         "assetTitle" => $asset->title,
-                        "assetQueueStatus" => "Not queued due to lack of credits"
+                        "siteId" => $site->id,
+                        "assetQueueStatus" => "Queued"
                     ];
-                    continue;
-                }
-                
-                
-                $suitability = $this->checkAssetSuitability($asset);
-                
-
-                if (!$suitability['success']) {
-                    $numberRejected++;
-                    $queueAllReport->numberOfAssetsRejectedWithNoAltText++;
-                    $queueAllReport->assets[] = [
+                    Queue::push(new RequestAltTextJob([
                         "assetId" => $asset->id,
-                        "assetUrl" => $asset->url,
-                        "assetTitle" => $asset->title,
-                        "assetQueueStatus" =>  $suitability['errorMessage']
-                    ];
-                    continue;
-                }
-                
-                $numberRequested++;
+                        "requestUserId" => $currentUserId,
+                        "actionType" => "Queue all",
+                        "overwrite" => $overwrite,
+                        "siteId" => $site->id,
+                    ]));
+                    $requestCount++;
 
-                $queueAllReport->numberOfAssetsQueuedWithNoAltText++;
-                $queueAllReport->assets[] = [
-                    "assetId" => $asset->id,
-                    "assetUrl" => $asset->url,
-                    "assetTitle" => $asset->title,
-                    "assetQueueStatus" => "Queued"
-                ];
-                Queue::push(new RequestAltTextJob([
-                    "assetId" => $asset->id,
-                    "requestUserId" => $currentUserId,
-                    "actionType" => "Queue all",
-                    "overwrite" => $overwrite
-                ]));
-                $requestCount++;
-                unset($suitability);
-            }
+                    unset($suitability);
+                } // end foreach site
+                    
+            } // end foreach asset
             unset($assets);
         }
         
@@ -1209,48 +1264,59 @@ class AltTextAiApi extends Component
             $assets = $assetsQuery->all();
             $queueAllReport->numberOfAssetsWithAltText = count($assets);
             foreach ($assets as $asset) {
+                foreach ($sites as $site) {
                 
-                
-                if ($requestCount >= $numberOfCredits) {
-                    $numberRejected++;
-                    $queueAllReport->numberOfAssetsRejectedWithAltText++;
+                    if ($requestCount >= $numberOfCredits) {
+                        $numberRejected++;
+                        $queueAllReport->numberOfAssetsRejectedWithAltText++;
 
 
-                    $queueAllReport->assets[] = [
+                        $queueAllReport->assets[] = [
+                            "assetId" => $asset->id,
+                            "assetUrl" => $asset->url,
+                            "assetTitle" => $asset->title,
+                            "siteId" => $site->id,
+                            "assetQueueStatus" =>  "Not queued due to lack of credits"
+                        ];
+                        continue;
+                    }
+                    
+                    $suitability = $this->checkAssetSuitability($asset);
+                    
+                    if (!$suitability['success']) {
+                        $numberRejected++;
+                        $queueAllReport->numberOfAssetsRejectedWithAltText++;
+
+                        $queueAllReport->assets[] = [
+                            "assetId" => $asset->id,
+                            "assetUrl" => $asset->url,
+                            "assetTitle" => $asset->title,
+                            "siteId" => $site->id,
+                            "assetQueueStatus" =>  $suitability['errorMessage']
+                        ];
+                        continue;
+                    }
+                    $numberRequested++;
+					$queueAllReport->numberOfAssetsQueuedWithAltText++;
+					$queueAllReport->assets[] = [
+						"assetId" => $asset->id,
+						"assetUrl" => $asset->url,
+						"assetTitle" => $asset->title,
+						"siteId" => $site->id,
+						"assetQueueStatus" => "Queued"
+					];
+
+                    Queue::push(new RequestAltTextJob([
                         "assetId" => $asset->id,
-                        "assetUrl" => $asset->url,
-                        "assetTitle" => $asset->title,
-                        "assetQueueStatus" =>  "Not queued due to lack of credits"
-                    ];
-                    continue;
-                }
-                
-                $suitability = $this->checkAssetSuitability($asset);
-                
-                if (!$suitability['success']) {
-                    $numberRejected++;
-                    $queueAllReport->numberOfAssetsRejectedWithAltText++;
-
-                    $queueAllReport->assets[] = [
-                        "assetId" => $asset->id,
-                        "assetUrl" => $asset->url,
-                        "assetTitle" => $asset->title,
-                        "assetQueueStatus" =>  $suitability['errorMessage']
-                    ];
-                    continue;
-                }
-                $numberRequested ++;
-                $queueAllReport->numberOfAssetsQueuedWithAltText++;
-                $queueAllReport->assets[$asset->id] = "Queued";
-                Queue::push(new RequestAltTextJob([
-                    "assetId" => $asset->id,
-                    "requestUserId" => $currentUserId,
-                    "actionType" => "Queue all",
-                    "overwrite" => $overwrite
-                ]));
-                $requestCount++;
-                unset($suitability);
-            }
+                        "requestUserId" => $currentUserId,
+                        "actionType" => "Queue all",
+                        "overwrite" => $overwrite,
+                        "siteId" => $site->id,
+                    ]));
+                    $requestCount++;
+                    unset($suitability);
+                } // end foreach site
+            } // end foreach asset
             unset($assets);
         }
         
