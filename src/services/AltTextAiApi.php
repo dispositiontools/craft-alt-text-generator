@@ -756,7 +756,6 @@ class AltTextAiApi extends Component
         }
         else {
             $AltTextAiApiCallModel = new AltTextAiApiCallModel();
-             = $siteId;
         }
 
         if( empty($AltTextAiApiCallModel->siteId))
