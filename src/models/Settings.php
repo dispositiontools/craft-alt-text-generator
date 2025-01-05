@@ -18,6 +18,7 @@ class Settings extends Model
     public ?bool $showHumanReview = true;
     public ?bool $webhookSetInAccount = true;
     public ?bool $apiKeyActive = false;
+    public ?int $pageLimit = 20;
     public ?string $modelName = "describe-regular";
     public ?string $lang = "en";
     public ?string $customField = 'alt';

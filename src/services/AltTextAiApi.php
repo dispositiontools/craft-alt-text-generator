@@ -524,6 +524,41 @@ class AltTextAiApi extends Component
         return true;
     }
     
+    // AltTextGenerator::getInstance()->altTextAiApi->getApiCallsTotal( );
+    public function getApiCallsTotal($criteria = null): int
+    {
+        $recordsQuery = AltTextAiApiCallRecord::find();
+      
+        if (array_key_exists('where', $criteria)) {
+            $x = 0;
+    
+            foreach ($criteria['where'] as $criteriaItem => $criteriaValue) {
+                $x++;
+                if ($x == 1) {
+                    $recordsQuery->where([$criteriaItem => $criteriaValue]);
+                } else {
+                    $recordsQuery->andWhere([$criteriaItem => $criteriaValue]);
+                }
+            }
+            
+            $recordsQuery->andWhere(["dateDeleted" => null]);
+        }
+        if (array_key_exists('limit', $criteria)) {
+            $recordsQuery->limit($criteria['limit']);
+        }
+        if (array_key_exists('offset', $criteria)) {
+            $recordsQuery->offset($criteria['offset']);
+        }
+         
+        $records = $recordsQuery->all();
+        $numberOfRecords = count($records);
+        unset($recordsQuery);
+        unset($records);
+       
+        return $numberOfRecords;
+    }
+
+
     // AltTextGenerator::getInstance()->altTextAiApi->getApiCalls( );
     public function getApiCalls($criteria = null): array
     {
@@ -542,6 +577,12 @@ class AltTextAiApi extends Component
             }
             
             $recordsQuery->andWhere(["dateDeleted" => null]);
+        }
+        if (array_key_exists('limit', $criteria)) {
+            $recordsQuery->limit($criteria['limit']);
+        }
+        if (array_key_exists('offset', $criteria)) {
+            $recordsQuery->offset($criteria['offset']);
         }
          
         $records = $recordsQuery->all();
@@ -1502,4 +1543,113 @@ class AltTextAiApi extends Component
         
         return $credits;
     }
+
+    public function createPaginationLinks($url,$totalItems, $pageLimit, $currentStart) {
+        // Calculate the total number of pages
+        $totalPages = ceil($totalItems / $pageLimit);
+        $currentPage = floor($currentStart / $pageLimit) + 1;
+    
+
+        $links = [];
+        // Start output
+
+    
+        // Previous link
+        if ($currentPage > 1) {
+            $prevStart = ($currentPage - 2) * $pageLimit;
+
+            $links[] = [
+                'url' => 'start=0',
+                'label' => "First",
+                'type' => 'Core',
+                'disable' => false,
+                'current' => false,
+                'offset' => 0,
+            ];
+
+            $links[] = [
+                'url' => 'start=' . $prevStart,
+                'label' => "Previous",
+                'type' => 'Core',
+                'disable' => false,
+                'current' => false,
+                'offset' => $prevStart,
+            ];
+           
+        } else {
+            /*
+            $links[] = [
+                'url' => '',
+                'label' => "Previous",
+                'type' => 'Core',
+                'disable' => true,
+                'current' => false,
+                'offset' => $currentStart,
+            ];
+            */
+        }
+    
+        // Page number links
+        for ($i = 1; $i <= $totalPages; $i++) {
+            $start = ($i - 1) * $pageLimit;
+            if ($i == $currentPage) {
+
+                $links[] = [
+                    'url' => '',
+                    'label' => $i,
+                    'type' => 'Core',
+                    'disable' => false,
+                    'current' => true,
+                    'offset' => $start, 
+                ];
+            } else {
+
+                $link = [
+                    'url' => '?start=' . $start,
+                    'offset' => $start, 
+                    'type' => 'Page',
+                    'label' => $i,
+                    'disable' => false,
+                    'current' => false,
+                    'offset' => $start, 
+                ];
+       
+                $links[] = $link;
+            }
+        }
+    
+        // Next link
+        if ($currentPage < $totalPages) {
+            $nextStart = $currentPage * $pageLimit;
+
+            $links[] = [
+                'url' => '?start=' .  $nextStart,
+                'label' => "Next",
+                'type' => 'Core',
+                'disable' => false,
+                'current' => false,
+                'offset' => $nextStart, 
+            ];
+
+            $link['type'] = "Core";
+            $link['label'] = "Last";
+            $links[] = $link;
+        } else {
+            /*
+            $links[] = [
+                'url' => '',
+                'label' => "Next",
+                'type' => 'Core',
+                'disable' => true,
+                'current' => false,
+                'offset' => $currentStart, 
+            ];
+            */
+        }
+
+       
+    
+        return $links;
+    }
+    
 }

@@ -288,6 +288,22 @@
     }) 
 }}
 
+<hr>
+
+{{ forms.textField({
+	type: 'number',
+	label:         "Number of items on review pages"|t,
+	id:            'pageLimit',
+	name:          'pageLimit',
+	instructions: '',
+	required: true,
+	value:         settings.pageLimit,
+	errors:        settings.getErrors('pageLimit'),
+	step: 1,
+    min: 1,
+    max: 500,
+}) }}
+
 
 {#
 <h2>Human review</h2>

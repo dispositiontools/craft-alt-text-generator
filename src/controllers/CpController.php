@@ -34,19 +34,34 @@ class CpController extends Controller
             return $this->renderTemplate('alt-text-generator/_cp/setup', ['title' => 'Alt Text Generator']);
         }
 
+        $limit = $request->getQueryParam('limit',$settings->pageLimit);
+        $offset = $request->getQueryParam('offset', 0);
+
         $apiCreditsCount = AltTextGenerator::getInstance()->altTextAiApi->getNumberOfAltTextApiCredits();
-    
+
+        $totalRecords = AltTextGenerator::getInstance()->altTextAiApi->getApiCallsTotal([
+            'where' =>
+            [
+                'altTextSyncStatus' => ['review'],
+            ],
+        ]);
+       
+        $url = "";
         // We need these three request parameters for the view. ("value" optional)
         $templateParams = [
             'title' => 'Alt Text Generator',
             'settings' => $settings,
             'credits' => $apiCreditsCount,
+            'totalRecords' => $totalRecords,
             'apiCalls' => AltTextGenerator::getInstance()->altTextAiApi->getApiCalls([
                 'where' =>
                 [
                     'altTextSyncStatus' => ['review'],
                 ],
+                'limit' => $limit,
+                'offset' => $offset,
             ]),
+            'pagination' => AltTextGenerator::getInstance()->altTextAiApi->createPaginationLinks($url,$totalRecords, $limit, $offset) 
         ];
         return $this->renderTemplate('alt-text-generator/_cp/dashboard', $templateParams);
     }
@@ -61,15 +76,36 @@ class CpController extends Controller
         // ...
         $this->requirePermission('altTextGeneratorViewHistory');
         $request = Craft::$app->getRequest();
-            
+
         $settings = AltTextGenerator::getInstance()->getSettings();
+
+        $limit = $request->getQueryParam('limit',$settings->pageLimit);
+        $offset = $request->getQueryParam('offset', 0);
+
         
-    
+
+        $totalRecords = AltTextGenerator::getInstance()->altTextAiApi->getApiCallsTotal([
+            'where' =>
+            [
+                'altTextSyncStatus' => ['synced','refreshing','resubmit'],
+            ],
+        ]);
+        
+        $url = "";
         // We need these three request parameters for the view. ("value" optional)
         $templateParams = [
             'title' => 'Alt Text Generator',
             'settings' => $settings,
-            'apiCalls' => AltTextGenerator::getInstance()->altTextAiApi->getApiCalls([]),
+            'apiCalls' => AltTextGenerator::getInstance()->altTextAiApi->getApiCalls([
+                'where' =>
+                [
+                    'altTextSyncStatus' => ['synced','refreshing','resubmit'],
+                ],
+                'limit' => $limit,
+                'offset' => $offset,
+            ]),
+            'totalRecords' => $totalRecords,
+            'pagination' => AltTextGenerator::getInstance()->altTextAiApi->createPaginationLinks($url,$totalRecords, $limit, $offset) 
         ];
         return $this->renderTemplate('alt-text-generator/_cp/history', $templateParams);
     }
@@ -85,17 +121,30 @@ class CpController extends Controller
         $request = Craft::$app->getRequest();
             
         $settings = AltTextGenerator::getInstance()->getSettings();
+
+        $limit = $request->getQueryParam('limit',$settings->pageLimit);
+        $offset = $request->getQueryParam('offset', 0);
+
+        $totalRecords = AltTextGenerator::getInstance()->altTextAiApi->getApiCallsTotal([
+            'where' =>
+            [
+                'altTextSyncStatus' => ['errors'],
+            ],
+        ]);
+       
         
-    
+        $url = "";
         // We need these three request parameters for the view. ("value" optional)
         $templateParams = [
             'title' => 'Alt Text Generator',
             'settings' => $settings,
+            'totalRecords' => $totalRecords,
             'apiCalls' => AltTextGenerator::getInstance()->altTextAiApi->getApiCalls(['where' =>
                 [
                     'altTextSyncStatus' => ['errors'],
                 ],
             ]),
+            'pagination' => AltTextGenerator::getInstance()->altTextAiApi->createPaginationLinks($url,$totalRecords, $limit, $offset) 
         ];
         return $this->renderTemplate('alt-text-generator/_cp/errors', $templateParams);
     }
