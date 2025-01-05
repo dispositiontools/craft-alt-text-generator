@@ -62,12 +62,16 @@
 		background-color:#aaa;
 		color:#000;
 	}
+	.atg-spacer{
+		width:100%;
+		height:50px;
+	}
 </style>
 
 {{ csrfInput() }}
 {{ actionInput('alt-text-generator/cp/update-api-calls') }}
 
-<h2>Review</h2>
+<h2>Generated alt texts to review</h2>
 
 <p>
 Credits: <strong>{{ credits }}</strong>
@@ -88,7 +92,9 @@ View history
 } %}
 
 
-<table style="100%">
+<div class="atg-spacer"></div>
+<div class="tableview tablepane">
+<table class="data fullwidth">
 <thead>
 <tr>
 	<th>Id</th>
@@ -106,4 +112,5 @@ View history
 {% endfor %}
 </tbody>
 </table>
+</div>
 {% endblock %}

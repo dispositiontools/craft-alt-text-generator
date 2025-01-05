@@ -62,6 +62,10 @@
 		background-color:#aaa;
 		color:#000;
 	}
+	.atg-spacer{
+		width:100%;
+		height:50px;
+	}
 </style>
 
 {{ csrfInput() }}
@@ -85,7 +89,9 @@ View current items to review
 } %}
 
 
-<table>
+<div class="atg-spacer"></div>
+<div class="tableview tablepane">
+<table class="data fullwidth">
 <thead>
 <tr>
 	<th>Id</th>
@@ -105,4 +111,5 @@ View current items to review
 {% endfor %}
 </tbody>
 </table>
+</div>
 {% endblock %}
