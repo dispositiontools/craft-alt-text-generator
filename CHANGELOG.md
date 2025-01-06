@@ -1,5 +1,16 @@
 # Release Notes for Alt text Generator
 
+## v5.2.1 - 2025-01-05
+
+### Added
+- Added a 'alt-text-generator-main' class to the main tag on the review, history and error pages. (Issue #13)[https://github.com/dispositiontools/craft-alt-text-generator/issues/13]
+- Added a new setting to limit the number of items on the review, history and error pages (Issue #9)[https://github.com/dispositiontools/craft-alt-text-generator/issues/9]
+- Added pagination on the review, history and error pages. This should make those pages load faster. (Issue #9)[https://github.com/dispositiontools/craft-alt-text-generator/issues/9]
+
+### Fixed
+- Updated the table styles on the review, history and error pages. This should make the pages easier to use. (Issue #13)[https://github.com/dispositiontools/craft-alt-text-generator/issues/13]
+- Renamed the Dashboard page to 'Generated alt texts to review' to make it clearer what that page is showing (Issue #14)[https://github.com/dispositiontools/craft-alt-text-generator/issues/14]
+
 
 ## v5.2.0 - 2024-10-24
 

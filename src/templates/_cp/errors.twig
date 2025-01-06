@@ -2,10 +2,20 @@
 {% extends "_layouts/cp" %}
 
 {% set fullPageForm = true %}
+{% set mainAttributes = {class: 'alt-text-generator-main' } %}
 
 
-
-
+{% set footer %}
+    <div id="count-container" class="light">Total errors: <strong>{{ totalRecords }}</strong></div>
+    <div id="actions-container" class="flex"></div>
+    <div id="export-container">
+       {% for item in pagination %}
+			{% if item.type == "Core"  %}
+				<a href="{{ url ("alt-text-generator?offset="~item.offset) }}" style="padding:0px 10px;color:rgb(63, 77, 90); {% if item.current %}font-weight:bold;{% endif %}" >{{ item.label }}</a> 
+			{% endif %}
+		{% endfor %}
+    </div>
+{% endset %}
 {% block content %}
 
 
@@ -62,6 +72,10 @@
 		background-color:#aaa;
 		color:#000;
 	}
+	.atg-spacer{
+		width:100%;
+		height:50px;
+	}
 </style>
 
 {{ csrfInput() }}
@@ -83,26 +97,24 @@ View current items to review
   quality: 75,
   position: 'top-center'
 } %}
-
-
-<table>
-<thead>
-<tr>
-	<th>Id</th>
-	<th>Status</th>
-	<th>Asset</th>
-	<th>Alt text</th>
-	<th>Actions</th>
-	<th>Errors</th>
-</tr>
-
-</thead>
-<tbody>
-
-{% for apiCall in apiCalls %}
-
-	{% include "alt-text-generator/_cp/_includes/apicall_table_row_error" %}
-{% endfor %}
-</tbody>
-</table>
+<div class="atg-spacer"></div>
+<div class="tableview tablepane">
+	<table class="data fullwidth">
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>Status</th>
+				<th>Asset</th>
+				<th>Alt text</th>
+				<th>Actions</th>
+				<th>Errors</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for apiCall in apiCalls %}
+			{% include "alt-text-generator/_cp/_includes/apicall_table_row_error" %}
+		{% endfor %}
+		</tbody>
+	</table>
+</div>
 {% endblock %}

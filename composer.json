@@ -2,7 +2,7 @@
     "name": "dispositiontools/craft-alt-text-generator",
     "description": "Craft CMS plugin to use alttext.ai to auto generate alt text for image assets",
     "type": "craft-plugin",
-    "version": "5.2.0",
+    "version": "5.2.1",
     "license": "proprietary",
     "support": {
         "email": "support@disposition.tools",
@@ -25,7 +25,7 @@
     },
     "extra": {
         "handle": "alt-text-generator",
-        "name": "Alt text Generator",
+        "name": "Alt Text Generator",
         "developer": "Disposition Tools",
         "documentationUrl": "https://github.com/dispositiontools/craft-alt-text-generator",
         "class": "dispositiontools\\craftalttextgenerator\\AltTextGenerator"

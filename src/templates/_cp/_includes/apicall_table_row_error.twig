@@ -3,14 +3,12 @@
 	 <td> <span class="pill ">{{ apiCall.altTextSyncStatus }}</span></td>
 	 <td>
 		 {% if apiCall.assetId %}
-			 {% set asset = craft.assets.id(apiCall.assetId).one() %}
-			  {% if asset %}
-			  {% if asset.canView(currentUser) %}<a href="{{ asset.cpEditUrl }}">{% endif %}
-			  <img src="{{ asset.getUrl(thumb) }}" style="width:75px;height:75px; margin-bottom:10px;" alt="{{ asset.alt }}" />
-			  {% if asset.canView(currentUser) %}</a>{% endif %}
+			{% set asset = craft.assets.id(apiCall.assetId).one() %}
+			{% if asset %}
+			  <img src="{{ asset.getUrl(thumb) }}" style="width:75px;height:75px;" alt="{{ asset.alt }}" />
+			  {% if asset.canView(currentUser) %}<a href="{{ asset.cpEditUrl }}">View asset</a>{% endif %}
 			{% endif %}
 		  {% endif %}
-		 
 	 </td>
 	 <td>
 		 {% if asset %}
