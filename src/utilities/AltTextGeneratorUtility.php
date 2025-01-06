@@ -55,11 +55,18 @@ class AltTextGeneratorUtility extends Utility
             'securityCode' => $settings->securityCode,
         ];
         $webhookUrl = UrlHelper::actionUrl('alt-text-generator/alt-text-ai-webhook/web-hook', $webHookParams, null, false);
+        $totalRecordsToReview = AltTextGenerator::getInstance()->altTextAiApi->getApiCallsTotal([
+            'where' =>
+            [
+                'altTextSyncStatus' => ['review'],
+            ],
+        ]);
         
         $apiCreditsCount = AltTextGenerator::getInstance()->altTextAiApi->getNumberOfAltTextApiCredits();
         $variables = [
             'apiCreditsCount' => $apiCreditsCount,
             'webhookUrl' => $webhookUrl,
+            'totalRecordsToReview' => $totalRecordsToReview
         ];
         
         return $view->renderTemplate('alt-text-generator/_components/utilities/alt-text-utilities.twig', $variables);

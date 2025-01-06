@@ -83,6 +83,31 @@ class AltTextAiApi extends Component
         
         return  $model;
     }
+
+      // AltTextGenerator::getInstance()->altTextAiApi->queueAllItemsInReviewToSync( );
+    public function queueAllItemsInReviewToSync()
+    {
+        $allItemsToSyncModels = AltTextGenerator::getInstance()->altTextAiApi->getApiCalls([
+            'where' =>
+            [
+                'altTextSyncStatus' => ['review'],
+            ]
+        ]);
+
+
+        foreach($allItemsToSyncModels as $AltTextAiApiCallModel )
+        {
+            $AltTextAiApiCallModel->altTextSyncStatus = "syncing";
+
+            $AltTextAiApiCallModel = $this->saveApiCall($AltTextAiApiCallModel);
+            Queue::push(new UpdateAssetWithGeneratedAltTextJob([
+                "apiCallId" => $AltTextAiApiCallModel->id,
+                "type" => "generated",
+            ]));
+        }
+        return ["imagesQueue" => count($allItemsToSyncModels)];
+   
+    }
     
     // AltTextGenerator::getInstance()->altTextAiApi->statsImagesWithAltText( );
     public function statsImagesWithAltText(): array

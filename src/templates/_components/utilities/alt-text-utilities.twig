@@ -99,6 +99,24 @@
 	</div>
 </form>
 
+<hr>
+
+<h2>Sync all images that are marked for review</h2>
+
+<p>This will update all images' alt text with the gemerated alt text that have alt text ready for review. (<a href="{{ url('alt-text-generator') }}">All the images listed here</a>)
+</p>
+<p>Images are synced via the queue.</p>
+<p>This doesn't submit any images to altText.ai</p>
+<form id="resync-all-assets" class="utility" method="post" accept-charset="UTF-8">
+	{{ actionInput('alt-text-generator/cp/queue-all-review-images-for-syncing') }}
+	{{ csrfInput() }}
+
+	<div class="buttons">
+		<button type="submit" class="btn submit"> Sync {{ totalRecordsToReview }} images </button>
+	</div>
+</form>
+
+
 
 <hr>
 

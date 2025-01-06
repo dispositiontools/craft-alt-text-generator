@@ -174,6 +174,18 @@ class CpController extends Controller
 
 
     
+    /**
+     * alt-text-generator/cp/queue-all-review-images-for-syncing action
+    */
+    public function actionQueueAllReviewImagesForSyncing(): Response
+    {
+        $imagesQueuedForSyncing = AltTextGenerator::getInstance()->altTextAiApi->queueAllItemsInReviewToSync( );
+
+        Craft::$app->getSession()->setSuccess( $imagesQueuedForSyncing['imagesQueue']. ' images queue for syncing');
+
+        return $this->redirectToPostedUrl();
+    }
+    
     
     /**
      * alt-text-generator/cp/queue-all-images-for-resync action
